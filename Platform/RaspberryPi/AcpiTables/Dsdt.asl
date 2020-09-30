@@ -58,6 +58,32 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
   {
     include ("Pep.asl")
 
+    Method (_OSC, 4, Serialized)  { // _OSC: Operating System Capabilities
+      CreateDWordField (Arg3, 0x00, STS0)
+      CreateDWordField (Arg3, 0x04, CAP0)
+      STS0 &= ~0x1F
+
+      If ((Arg0 == ToUUID ("0811b06e-4a27-44f9-8d60-3cbbc22e7b48"))) { /*  Platform-wide Capabilities */
+#if (RPI_MODEL == 4)
+        If (!(Arg1 == One)) {
+          STS0 |= 0x0A    /* Unable to process request + Unkown Revision */
+        } Else {
+          CAP0 &= ~0x4020 /* CPPC support + Flexable Address Space for CPPC */
+          STS0 |= 0x10    /* capabilities masked */
+        }
+#else
+        CAP0 = 0        /* Nothing supported */
+        STS0 |= 0x10    /* capabilities masked */
+#endif
+      } ElseIf ((Arg0 == ToUUID ("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
+        /* PCI Capabilities */
+        STS0 |= 0x02 /* Unable to process request */
+      } Else {
+        STS0 |= 0x06 /* Unable to process request + Unrecognized UUID */
+      }
+      Return (Arg3)
+    }
+
     Device (CPU0)
     {
       Name (_HID, "ACPI0007")
@@ -66,8 +92,14 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+      Method (_CPC)
+      {
+        Return(CPCX)
+      }
+      Name (_PSD, Package() {  //_PSD: Pstate dependency, all cores, same freq domain
+        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+      })
     }
-
     Device (CPU1)
     {
       Name (_HID, "ACPI0007")
@@ -76,6 +108,13 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+      Method (_CPC)
+      {
+        Return(CPCX)
+      }
+      Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
+        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+      })
     }
 
     Device (CPU2)
@@ -86,6 +125,13 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+      Method (_CPC)
+      {
+        Return(CPCX)
+      }
+      Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
+        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+      })
     }
 
     Device (CPU3)
@@ -96,6 +142,13 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+      Method (_CPC)
+      {
+        Return(CPCX)
+      }
+      Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
+        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+      })
     }
 
     //
@@ -274,6 +327,49 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
         Name (_PSL, Package () { \_SB_.CPU0, \_SB_.CPU1, \_SB_.CPU2, \_SB_.CPU3 })
       }
     }
+
+
+    // Collaborative Processor Performace Control (CPPC)
+    // Define the system frequency and how the OSPM can alter
+    // the frequency at runtime. On the rpi the frequencies are
+    // controlled by the videocore firmware/mailbox interface
+    // but this interface isn't nativly PCC/etc so we use the ARM
+    // mailboxes (chapter 13 in the TRM) as triggers to trap
+    // to a secure state, and forward the request to the videocore
+    //
+    // funny enough, we could use this method for _PCT and simplify
+    // this even further (assuming OS's can deal with 'SystemMemory'
+    // PERF_CTRL). 
+    Name(CPCX, Package()
+    {
+      21, // Number of entries
+      02, // Revision
+      //
+      // Describe processor capabilities (note Register() is 19.6.115)
+      //
+      1700,  // HighestPerformance - Turbo
+      1500,  // Nominal Performance - Maximum Sustained
+      600,   // Lowest nonlinear Performance
+      600,   // LowestPerformance
+      ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Guaranteed Performance (optional)
+      ResourceTemplate() {Register(SystemMemory, 32, 0, 0xFF800080, 3)}, // Desired PerformanceRegister
+      ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Minimum PerformanceRegister (optional)
+      ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Maximum PerformanceRegister (optional)
+      ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Perf ReductionToleranceRegister (optional)
+      ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Time window  register (optional)
+      ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Counter wrap around time (optional)
+      ResourceTemplate() {Register(SystemMemory, 32, 0, 0xFE003004, 3)}, // Reference counter register (PPERF)
+      ResourceTemplate() {Register(SystemMemory, 32, 0, 0xFE003008, 3)}, // Delivered counter register (APERF)
+      ResourceTemplate() {Register(SystemMemory, 32, 0, 0xFF800080, 3)}, // Performance limited register
+      ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Enable register (optional)
+      0, // Autonomous  selection enable register (optional)
+      ResourceTemplate() {Register(SystemMemory,  0, 0, 0, 0)}, // Autonomous activity window register (optional)
+      ResourceTemplate() {Register(SystemMemory,  0, 0, 0, 0)}, // Autonomous energy performance preference register (optional)
+      0,    // Reference performance 
+      600,  // lowest frequency
+      1500, // nominal frequency
+    })
+
 #endif
 
   }
