@@ -462,7 +462,7 @@ ApplyVariables (
 
   if (Rate != 0) {
     DEBUG ((DEBUG_INFO, "Setting CPU speed to %u MHz\n", Rate / FREQ_1_MHZ));
-    Status = mFwProtocol->SetClockRate (RPI_MBOX_CLOCK_RATE_ARM, Rate, 1);
+    Status = mFwProtocol->SetClockRate (RPI_MBOX_CLOCK_RATE_ARM, Rate, 0);
     if (Status != EFI_SUCCESS) {
       DEBUG ((DEBUG_ERROR, "Couldn't set the CPU speed: %r\n", Status));
     } else {
