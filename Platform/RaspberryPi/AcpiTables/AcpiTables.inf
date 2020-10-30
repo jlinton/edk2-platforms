@@ -37,6 +37,7 @@
   SpcrMiniUart.aslc
   SpcrPl011.aslc
   Pptt.aslc
+  Pcct.aslc
   SsdtThermal.asl
   Xhci.asl
   Pci.asl
