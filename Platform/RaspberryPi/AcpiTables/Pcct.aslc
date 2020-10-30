@@ -1,0 +1,61 @@
+/** @file
+*  Platform Communications Channel Table (PCCT)
+*
+*  Copyright (c) 2012 - 2020, ARM Limited. All rights reserved.
+*
+*  SPDX-License-Identifier: BSD-2-Clause-Patent
+*
+**/
+
+#include <IndustryStandard/Acpi.h>
+#include <Library/AcpiLib.h>
+#include <Library/ArmLib.h>
+#include <Library/PcdLib.h>
+
+#include "AcpiTables.h"
+
+#pragma pack (1)
+
+typedef struct {
+  EFI_ACPI_6_3_PLATFORM_COMMUNICATION_CHANNEL_TABLE_HEADER    Header;
+  EFI_ACPI_6_3_PCCT_SUBSPACE_GENERIC                          Subspace;
+} PI_PLATFORM_COMM_CHANNEL_TABLE;
+
+#pragma pack ()
+
+#define PCC_MEM_ADDR 0x1f0000 //same as DT base.. cause if we are using PCC, we probably aren't using DT
+#define DOORBELL_ADDR 0xFF800080
+
+PI_PLATFORM_COMM_CHANNEL_TABLE Pcct = {
+  {
+    ACPI_HEADER(
+      EFI_ACPI_6_3_PLATFORM_COMMUNICATIONS_CHANNEL_TABLE_SIGNATURE,
+      PI_PLATFORM_COMM_CHANNEL_TABLE,
+      EFI_ACPI_6_3_PLATFORM_COMMUNICATION_CHANNEL_TABLE_REVISION
+    ),
+    //
+    // PCCT specific fields
+    //
+    0, // Header Flags (no interrupt)
+    0, // Reserved
+  },
+  {
+    EFI_ACPI_6_3_PCCT_SUBSPACE_TYPE_GENERIC,
+    sizeof(EFI_ACPI_6_3_PCCT_SUBSPACE_GENERIC),
+    {},             //  Reserved[6]
+    PCC_MEM_ADDR,   //  BaseAddress
+    16,             //  AddressLength
+    { EFI_ACPI_6_3_SYSTEM_MEMORY, 32, 0, 4, DOORBELL_ADDR }, //DoorbellRegister
+    0,          // DoorbellPreserve
+    0x10000000, // DoorbellWrite;
+    100,          // NominalLatency;
+    0,          // MaximumPeriodicAccessRate;
+    100,          // MinimumRequestTurnaroundTime;
+  },
+};
+
+//
+// Reference the table being generated to prevent the optimizer from removing the
+// data structure from the executable
+//
+VOID* CONST ReferenceAcpiTable = &Pcct;
