@@ -1144,7 +1144,7 @@ RpiFirmwareGetClockRate (
   Cmd->TagHead.TagValueSize   = 0;
   Cmd->TagBody.ClockId        = ClockId;
   Cmd->EndTag                 = 0;
-
+ 
   Status = MailboxTransaction (Cmd->BufferHead.BufferSize, RPI_MBOX_VC_CHANNEL, &Result);
 
   if (EFI_ERROR (Status) ||
