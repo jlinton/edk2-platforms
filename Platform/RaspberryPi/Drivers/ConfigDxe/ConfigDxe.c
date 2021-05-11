@@ -641,7 +641,7 @@ ApplyVariables (
     GpioPinFuncSet (24, GPIO_FSEL_INPUT);
   }
 
-  if (FanOnGpio) {
+  if (FanOnGpio && (FanOnGpio < 0x7F)) {
     DEBUG ((DEBUG_INFO, "Fan enabled on GPIO %d\n", FanOnGpio));
     GpioPinFuncSet (FanOnGpio, GPIO_FSEL_OUTPUT);
   }

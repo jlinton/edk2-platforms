@@ -14,7 +14,7 @@
 
 #include <IndustryStandard/Acpi.h>
 
-DefinitionBlock (__FILE__, "SSDT", 2, "RPIFDN", "RPITHFAN", 2)
+DefinitionBlock (__FILE__, "SSDT", 5, "RPIFDN", "RPITHFAN", 2)
 {
   External (\_SB_.EC00, DeviceObj)
   External (\_SB_.EC00.TZ00, DeviceObj)
@@ -38,6 +38,16 @@ DefinitionBlock (__FILE__, "SSDT", 2, "RPIFDN", "RPITHFAN", 2)
         GPL1, 32,
         GPL2, 32
       }
+      // two registers in the second pcc space 5.5.2.4.7 (6.3)
+      OperationRegion (FPCC, PCC, 1, 16);
+      Field (FPCC, ByteAcc, NoLock, Preserve) {
+        CMD, 16,       // Command field  
+        STAT, 16,
+        FANS, 32, //Fan speed register (read to get speed, write to update)
+      } 
+      //Register(PCC, 32, 0, 0x0, 1, FANS); // Fan Speed
+      //Register(PCC, 32, 0, 0x4, 1, SETF); // Set Fan Speed
+
       // We are hitting a GPIO pin to on/off a fan.
       // This assumes that UEFI has programmed the
       // direction as OUT. Given the current limitations
@@ -45,16 +55,41 @@ DefinitionBlock (__FILE__, "SSDT", 2, "RPIFDN", "RPITHFAN", 2)
       // the GPIO to switch a larger voltage/current
       // for the fan rather than driving it directly.
       Method (_STA) {
-        if (GPL1 & (1 << GIOP)) {
-          Return (1)                 // present and enabled
+        if (LEqual(GIOP, 0xFF)) {
+          //Store (0, STAT)
+          Store (0, CMD) //read
+//          while (STAT == 0) {
+//          }
+          if (FANS > 0) {
+            Return (1)
+          }
+        } else {
+          if (GPL1 & (1 << GIOP)) {
+            Return (1)                 // present and enabled
+          }
         }
         Return (0)
       }
+
       Method (_ON)  {                // turn fan on
-        Store (1 << GIOP, GPS0)
+        if ( LEqual(GIOP, 0xFF)) {
+          Store (200, FANS)
+          Store (1, CMD) //write
+//          while (STAT == 0) {
+//          }
+        } else {
+          Store (1 << GIOP, GPS0)
+        }
       }
       Method (_OFF) {                // turn fan off
-        Store (1 << GIOP, GPC0)
+        if (LEqual(GIOP, 0xFF)) {
+          Store (0, FANS)
+          Store (1, CMD) //write
+//          while (STAT == 0) {
+//          }
+        } else {
+          Store (1 << GIOP, GPC0)
+        }
       }
     }
     Device (FAN0) {
