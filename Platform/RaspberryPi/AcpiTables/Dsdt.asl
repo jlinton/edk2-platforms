@@ -367,8 +367,6 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Counter wrap around time (optional)
       ResourceTemplate() {Register(PCC,          32, 0,        0x0, 0)}, // Reference counter register (PPERF)
       ResourceTemplate() {Register(PCC,          32, 0,        0x4, 0)}, // Delivered counter register (APERF)
-      //ResourceTemplate() {Register(SystemMemory, 32, 0, 0xFE003004, 3)}, // Reference counter register (PPERF)
-      //ResourceTemplate() {Register(SystemMemory, 32, 0, 0xFE003008, 3)}, // Delivered counter register (APERF)
       ResourceTemplate() {Register(SystemMemory, 32, 0, 0xFF800080, 3)}, // Performance limited register
       ResourceTemplate() {Register(SystemMemory,  0, 0,          0, 0)}, // Enable register (optional)
       0, // Autonomous  selection enable register (optional)

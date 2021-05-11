@@ -18,7 +18,8 @@
 
 typedef struct {
   EFI_ACPI_6_3_PLATFORM_COMMUNICATION_CHANNEL_TABLE_HEADER    Header;
-  EFI_ACPI_6_3_PCCT_SUBSPACE_GENERIC                          Subspace;
+  EFI_ACPI_6_3_PCCT_SUBSPACE_GENERIC                          Subspace0;  // processor frequency
+  EFI_ACPI_6_3_PCCT_SUBSPACE_GENERIC                          Subspace1;  // fan control
 } PI_PLATFORM_COMM_CHANNEL_TABLE;
 
 #pragma pack ()
@@ -46,11 +47,24 @@ PI_PLATFORM_COMM_CHANNEL_TABLE Pcct = {
     PCC_MEM_ADDR,   //  BaseAddress
     16,             //  AddressLength
     { EFI_ACPI_6_3_SYSTEM_MEMORY, 32, 0, 4, DOORBELL_ADDR }, //DoorbellRegister
-    0,          // DoorbellPreserve
-    0x10000000, // DoorbellWrite;
-    100,          // NominalLatency;
-    0,          // MaximumPeriodicAccessRate;
-    100,          // MinimumRequestTurnaroundTime;
+    0,              // DoorbellPreserve
+    0x10000000,     // DoorbellWrite;
+    100,            // NominalLatency;
+    0,              // MaximumPeriodicAccessRate;
+    100,            // MinimumRequestTurnaroundTime;
+  },
+  {
+    EFI_ACPI_6_3_PCCT_SUBSPACE_TYPE_GENERIC,
+    sizeof(EFI_ACPI_6_3_PCCT_SUBSPACE_GENERIC),
+    {},                //  Reserved[6]
+    PCC_MEM_ADDR + 16, //  BaseAddress
+    16,                //  AddressLength
+    { EFI_ACPI_6_3_SYSTEM_MEMORY, 32, 0, 4, DOORBELL_ADDR }, //DoorbellRegister
+    0,                 // DoorbellPreserve
+    0x20000000,        // DoorbellWrite;
+    100,               // NominalLatency;
+    0,                 // MaximumPeriodicAccessRate;
+    100,               // MinimumRequestTurnaroundTime;
   },
 };
 
