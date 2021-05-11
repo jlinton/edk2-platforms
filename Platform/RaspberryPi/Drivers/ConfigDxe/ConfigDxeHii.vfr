@@ -219,6 +219,7 @@ formset
               option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_OFF), value = 0, flags = DEFAULT;
               option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_18), value = 18, flags = 0;
               option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_19), value = 19, flags = 0;
+              option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_FF), value = 0xFF, flags = 0;
           endoneof;
         endif;
 
