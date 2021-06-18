@@ -24,6 +24,7 @@ DefinitionBlock (__FILE__, "SSDT", 5, "RPIFDN", "RPITHFAN", 2)
     // Define a NameOp we will modify during InstallTable
     Name (GIOP, 0x2) //08 47 49 4f 50 0a 02 (value must be >1)
     Name (FTMP, 0x2)
+    Name (FANX, 200) // current fan speed
     // Describe a fan
     PowerResource (PFAN, 0, 0) {
       OperationRegion (GPIO, SystemMemory, GPIO_BASE_ADDRESS, 0x1000)
@@ -38,6 +39,11 @@ DefinitionBlock (__FILE__, "SSDT", 5, "RPIFDN", "RPITHFAN", 2)
         GPL1, 32,
         GPL2, 32
       }
+      OperationRegion (FDBL, SystemMemory, 0xFF800080, 0x4)
+      Field (FDBL, DWordAcc, NoLock, Preserve) {
+        FSPD, 32
+      }
+
       // two registers in the second pcc space 5.5.2.4.7 (6.3)
       OperationRegion (FPCC, PCC, 1, 16);
       Field (FPCC, ByteAcc, NoLock, Preserve) {
@@ -57,12 +63,13 @@ DefinitionBlock (__FILE__, "SSDT", 5, "RPIFDN", "RPITHFAN", 2)
       Method (_STA) {
         if (LEqual(GIOP, 0xFF)) {
           //Store (0, STAT)
-          Store (0, CMD) //read
+//          Store (0, CMD) //read
 //          while (STAT == 0) {
 //          }
-          if (FANS > 0) {
-            Return (1)
-          }
+//          if (FANS > 0) {
+//            Return (1)
+//          }
+	    return (FANX)
         } else {
           if (GPL1 & (1 << GIOP)) {
             Return (1)                 // present and enabled
@@ -73,8 +80,9 @@ DefinitionBlock (__FILE__, "SSDT", 5, "RPIFDN", "RPITHFAN", 2)
 
       Method (_ON)  {                // turn fan on
         if ( LEqual(GIOP, 0xFF)) {
-          Store (200, FANS)
-          Store (1, CMD) //write
+          Store (1, FANX)
+	  Store (0x300000D0, FSPD) //turn it on
+//        Store (1, CMD) //write
 //          while (STAT == 0) {
 //          }
         } else {
@@ -83,8 +91,9 @@ DefinitionBlock (__FILE__, "SSDT", 5, "RPIFDN", "RPITHFAN", 2)
       }
       Method (_OFF) {                // turn fan off
         if (LEqual(GIOP, 0xFF)) {
-          Store (0, FANS)
-          Store (1, CMD) //write
+          Store (0, FANX)
+	  Store (0x30000000, FSPD) //turn it off
+//          Store (1, CMD) //write
 //          while (STAT == 0) {
 //          }
         } else {
