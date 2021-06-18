@@ -1,0 +1,12 @@
+# top-most EditorConfig file
+root = true
+
+# dos-style newlines with a newline ending every file
+[*]
+end_of_line = crlf
+insert_final_newline = true
+
+# two space indentation
+[*.{c,h,dec,dsc,fdf,aslc,asl,vfr}]
+indent_style = space
+indent_size = 2
