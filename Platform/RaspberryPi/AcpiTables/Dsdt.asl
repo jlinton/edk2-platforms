@@ -99,6 +99,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+#if (RPI_MODEL == 4)
       Method (_CPC)
       {
         Return(CPCX)
@@ -106,6 +107,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       Name (_PSD, Package() {  //_PSD: Pstate dependency, all cores, same freq domain
         Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
+#endif
     }
     Device (CPU1)
     {
@@ -115,6 +117,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+#if (RPI_MODEL == 4)
       Method (_CPC)
       {
         Return(CPCX)
@@ -122,6 +125,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
         Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
+#endif
     }
 
     Device (CPU2)
@@ -132,6 +136,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+#if (RPI_MODEL == 4)
       Method (_CPC)
       {
         Return(CPCX)
@@ -139,6 +144,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
         Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
+#endif
     }
 
     Device (CPU3)
@@ -149,6 +155,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       {
         Return (0xf)
       }
+#if (RPI_MODEL == 4)
       Method (_CPC)
       {
         Return(CPCX)
@@ -156,6 +163,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
       Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
         Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
+#endif
     }
 
     //
