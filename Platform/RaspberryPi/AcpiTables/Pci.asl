@@ -65,7 +65,7 @@ DefinitionBlock (__FILE__, "SSDT", 5, "RPIFDN", "RPI4PCIE", 2)
       Name (_DSD, Package () {
         ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
           Package () {
-            Package () { "linux-ecam-quirk-id", "bcm2711" },
+            Package () { "linux-ecam-quirk-id", "bc2711" },
           }
       })
 
