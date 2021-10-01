@@ -248,12 +248,28 @@ CalculateClockFrequencyDivisor (
 {
   EFI_STATUS Status;
   UINT32 Divisor;
-  UINT32 BaseFrequency = 0;
+  UINT32 BaseFrequency = 100000000;
+
+  //Status = mFwProtocol->SetClockRate (RPI_MBOX_CLOCK_RATE_EMMC2, BaseFrequency, 1);
+
+  //BaseFrequency = 0;
+
+  // We have a bit of a house of cards here. The linux driver in ACPI mode is honoring
+  // the SDHCI capabilities register base clock frequency field (bits 8-13 or 8-15)
+  // meaning we should assure that the actual base frequency is close. But we can also
+  // adjust that divisor via the AML sdhci-caps fields (linux only?). In the case of
+  // the EMMC/Arasan we have already matched that to the usual 250Mhz that the rpi was
+  // providing in the past as the base frequency. In the case of the EMMC2 we are
+  // allowing the HW provided divisor.
 
   if (PcdGet32 (PcdSdIsArasan)) {
     Status = mFwProtocol->GetClockRate (RPI_MBOX_CLOCK_RATE_EMMC, &BaseFrequency);
   } else {
+//	BaseFrequency = 100000000;
+//	Status = mFwProtocol->SetClockRate (RPI_MBOX_CLOCK_RATE_EMMC2, BaseFrequency, 0);
+    BaseFrequency = 0;
     Status = mFwProtocol->GetClockRate (RPI_MBOX_CLOCK_RATE_EMMC2, &BaseFrequency);
+	BaseFrequency = 100000000;
   }
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Couldn't get RPI_MBOX_CLOCK_RATE_EMMC\n"));
@@ -276,7 +292,7 @@ CalculateClockFrequencyDivisor (
     Divisor = MAX_DIVISOR_VALUE;
   }
 
-  DEBUG ((DEBUG_MMCHOST_SD, "ArasanMMCHost: BaseFrequency 0x%x Divisor 0x%x\n", BaseFrequency, Divisor));
+  DEBUG ((DEBUG_ERROR, "ArasanMMCHost: BaseFrequency 0x%x Divisor 0x%x\n", BaseFrequency, Divisor));
 
   *DivisorValue = (Divisor & 0xFF) << 8;
   Divisor >>= 8;
@@ -484,7 +500,8 @@ MMCNotifyState (
         return Status;
       }
 
-      DEBUG ((DEBUG_MMCHOST_SD, "ArasanMMCHost: CAP %X CAPH %X\n", MmioRead32(MMCHS_CAPA),MmioRead32(MMCHS_CUR_CAPA)));
+      DEBUG ((DEBUG_ERROR, "ArasanMMCHost: CAP %X CAPH %X\n", MmioRead32(MMCHS_CAPA),MmioRead32(MMCHS_CUR_CAPA)));
+      DEBUG ((DEBUG_ERROR, "ArasanMMCHost: basefreq %X\n", (MmioRead32(MMCHS_CAPA) >> 8)&0xFF));
 
       // Lets switch to card detect test mode.
       SdMmioOr32 (MMCHS_HCTL, BIT7|BIT6);
