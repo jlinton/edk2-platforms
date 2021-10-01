@@ -36,6 +36,198 @@ Device (USB0)
   }
 }
 
+// Video Core 5 GPU
+Device (GPU1)
+{
+  Name (_HID, "BCMV5000")
+  Name (_CID, "BCMV5000")
+  Name (_UID, 0x0)
+  Name (_CCA, 0x0)
+  Method (_STA)
+  {
+    Return (0xf)
+  }
+  
+  Device(HVS0)
+  {
+    Name (_HID, "BCMV5001")
+    Name (_CID, "BCMV5001")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe400000, 0x6000, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 129 }
+      })
+      Return (RBUF)
+    }
+  }
+
+  Device(HDM0)
+  {
+    Name (_HID, "BCMV5020")
+    Name (_CID, "BCMV5020")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfef00700, 0x300, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 136 }
+      })
+      Return (RBUF)
+    }
+  }
+
+  Device(HDM1)
+  {
+    Name (_HID, "BCMV5021")
+    Name (_CID, "BCMV5021")
+    Name (_UID, 0x1)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfef05700, 0x300, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 137 }
+      })
+      Return (RBUF)
+    }
+  }
+
+  Device(TXP0)
+  {
+    Name (_HID, "BCMV5003")
+    Name (_CID, "BCMV5003")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe004000, 0x20, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 107 }
+      })
+      Return (RBUF)
+    }
+  }
+
+  Device(PVA0)
+  {
+    Name (_HID, "BCMV5040")
+    Name (_CID, "BCMV5040")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe206000, 0x100, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 141 }
+      })
+      Return (RBUF)
+    }
+  }
+
+
+  Device(PVA1)
+  {
+    Name (_HID, "BCMV5041")
+    Name (_CID, "BCMV5041")
+    Name (_UID, 0x1)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe207000, 0x100, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 142 }
+      })
+      Return (RBUF)
+    }
+  }
+
+
+  Device(PVA2)
+  {
+    Name (_HID, "BCMV5042")
+    Name (_CID, "BCMV5042")
+    Name (_UID, 0x2)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe20a000, 0x100, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 133 }
+      })
+      Return (RBUF)
+    }
+  }
+
+  Device(PVA3)
+  {
+    Name (_HID, "BCMV5043")
+    Name (_CID, "BCMV5043")
+    Name (_UID, 0x3)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe216000, 0x100, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 138 }
+      })
+      Return (RBUF)
+    }
+  }
+
+}
+
 // Video Core 4 GPU
 Device (GPU0)
 {
