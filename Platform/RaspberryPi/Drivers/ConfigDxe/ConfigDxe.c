@@ -478,6 +478,15 @@ ApplyVariables (
     DEBUG ((DEBUG_INFO, "Current CPU speed is %u MHz\n", Rate / FREQ_1_MHZ));
   }
 
+  if (mModelFamily == 4) {
+    Status = gDS->AddMemorySpace (EfiGcdMemoryTypeMemoryMappedIo, BCM2836_SPI0_BASE_ADDRESS,
+                                  SIZE_4KB, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR (Status);
+    Status = gDS->SetMemorySpaceAttributes (BCM2836_SPI0_BASE_ADDRESS,
+                                            SIZE_4KB, EFI_MEMORY_UC|EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR (Status);
+  }
+
   if (mModelFamily >= 4 && PcdGet32 (PcdRamMoreThan3GB) != 0 &&
       PcdGet32 (PcdRamLimitTo3GB) == 0) {
     UINT64 SystemMemorySize;
@@ -609,6 +618,24 @@ ApplyVariables (
       Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_EMMC2, TRUE);
       Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_EMMC, TRUE);
     }
+
+    /*
+     * Note FvbInitialize() where we have already set these:
+     * 40-45 access the SPI0 where the eeprom is located
+     * SPI sig     GPIO      Mode
+     * MISO        40        ALT4
+     * MOSI        41        ALT4
+     * SCLK        42        ALT4
+     * CE0         43        ALT4
+     * CE1         44        ALT4
+     * CE2         45        ALT4
+     */
+
+    // What should we do with the LDO?
+    Status = mFwProtocol->SetLdoRegState (4,4,0); //magic values from rpi-eeprom-config
+
+    Status = mFwProtocol->SetLdoRegState (4,4,1); //magic values from rpi-eeprom-config
+
   } else {
     DEBUG ((DEBUG_ERROR, "Model Family %d not supported...\n", mModelFamily));
   }
