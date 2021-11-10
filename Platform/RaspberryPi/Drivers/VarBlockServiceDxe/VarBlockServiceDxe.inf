@@ -37,6 +37,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   Platform/RaspberryPi/RaspberryPi.dec
+  Silicon/Broadcom/Bcm283x/Bcm283x.dec
 
 [LibraryClasses]
   BaseLib
@@ -44,6 +45,7 @@
   DebugLib
   DevicePathLib
   DxeServicesTableLib
+  GpioLib
   MemoryAllocationLib
   PcdLib
   UefiBootServicesTableLib
@@ -75,6 +77,7 @@
   gArmTokenSpaceGuid.PcdFdSize
 
 [Pcd]
+  gBcm283xTokenSpaceGuid.PcdBcm283xRegistersAddress
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase

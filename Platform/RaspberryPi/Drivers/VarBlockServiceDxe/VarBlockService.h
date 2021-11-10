@@ -33,6 +33,8 @@ typedef struct {
   EFI_DEVICE_PATH_PROTOCOL   *Device;
   CHAR16                     *MappedFile;
   BOOLEAN                    Dirty;
+  UINTN                      SpiBase;
+  UINTN                      FlashOffset;
 } EFI_FW_VOL_INSTANCE;
 
 extern EFI_FW_VOL_INSTANCE *mFvInstance;
@@ -207,5 +209,11 @@ VOID
 FileClose (
   IN  EFI_FILE_PROTOCOL *File
   );
+
+typedef struct {
+  UINT64                      FvLength;
+  EFI_FIRMWARE_VOLUME_HEADER  FvbInfo;
+  EFI_FV_BLOCK_MAP_ENTRY      End[1];
+} EFI_FVB_MEDIA_INFO;
 
 #endif

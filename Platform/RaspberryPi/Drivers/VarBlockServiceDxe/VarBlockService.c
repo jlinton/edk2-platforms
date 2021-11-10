@@ -7,6 +7,11 @@
  *
  **/
 
+#include <Base.h>
+
+#include <IndustryStandard/Bcm2836.h>
+#include <IndustryStandard/Bcm2836Gpio.h>
+
 #include <Protocol/DevicePath.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 
@@ -15,8 +20,13 @@
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/DxeServicesTableLib.h>
+#include <Library/GpioLib.h>
+#include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+
+#include <Guid/VariableFormat.h>
 
 #include "VarBlockService.h"
 
@@ -85,6 +95,335 @@ EFI_FW_VOL_BLOCK_DEVICE mFvbDeviceTemplate = {
   }
 };
 
+/*
+ * This is a derived approximation for the number of BCM2835_SPI_CS
+ * register reads that can be accomplished in 1US on a bcm2711.
+ */
+#define SPI_CS_READS_PER_US 25
+
+STATIC
+VOID
+EvilDelay(UINTN micro_sec)
+{
+  UINT32 looping;
+  for (looping=0;looping<micro_sec;looping++) {
+    UINT32 looping2;
+    // RPi4 does about 25 reg reads per micro second
+    for (looping2=0;looping2<SPI_CS_READS_PER_US;looping2++) {
+      MmioRead32 (mFvInstance->SpiBase+BCM2835_SPI_CS);
+    }
+  }
+}
+
+// buff must be greather than the largest of in_len or out_len
+
+STATIC
+INT32
+DoSpiCommand(UINT8 *Buffer, int in_len, int out_len)
+{
+  int cur_byte;
+  UINT32 ret = 0;
+
+  MmioWrite32 (mFvInstance->SpiBase+BCM2835_SPI_CS, BCM2835_SPI_CS_TA);
+
+
+  for (cur_byte=0;cur_byte<in_len+out_len;cur_byte++)
+  {
+    int loop = 10000*SPI_CS_READS_PER_US;
+
+    while ((MmioRead32 (mFvInstance->SpiBase+BCM2835_SPI_CS) & BCM2835_SPI_CS_TXD) == 0) {
+      loop--;
+      if (loop==0) {
+        DEBUG ((DEBUG_ERROR, "Write timeout %X\n", MmioRead32 (mFvInstance->SpiBase+BCM2835_SPI_CS)));
+        ret = -1;
+        break;
+      }
+    }
+
+    if (cur_byte<out_len) {
+        MmioWrite32 (mFvInstance->SpiBase+BCM2835_SPI_FIFO, Buffer[cur_byte]);
+    } else {
+      MmioWrite32 (mFvInstance->SpiBase+BCM2835_SPI_FIFO, 0);
+    }
+
+    loop = 10000*SPI_CS_READS_PER_US;
+    while ((MmioRead32 (mFvInstance->SpiBase+BCM2835_SPI_CS) & BCM2835_SPI_CS_RXD) == 0) {
+      loop--;
+      if (loop==0) {
+        DEBUG ((DEBUG_ERROR, "Read timeout %X\n", MmioRead32 (mFvInstance->SpiBase+BCM2835_SPI_CS)));
+        ret = -1;
+        break;
+      }
+    }
+
+    if (cur_byte<out_len) {
+      MmioRead32 (mFvInstance->SpiBase+BCM2835_SPI_FIFO);
+    } else {
+      ret++;
+      Buffer[cur_byte-out_len] = MmioRead32 (mFvInstance->SpiBase+BCM2835_SPI_FIFO);
+    }
+  }
+
+  MmioWrite32 (mFvInstance->SpiBase+BCM2835_SPI_CS, 0);
+
+  EvilDelay(1); //wait for /CS to settle
+
+  return ret;
+}
+
+STATIC
+INT32
+ReadDeviceId(void)
+{
+  UINT8 Buffer[32];
+  Buffer[0] = 0x9F;
+
+  DoSpiCommand(Buffer, 3, 1); //EF 30 31 is the winbond W25X40CL on the base rpi4
+  if (Buffer[0] != 0xEF) {
+    DEBUG ((DEBUG_INFO, "ReadDeviceId %02X %02X %02X\n", Buffer[0], Buffer[1], Buffer[2]));
+  }
+  // Lets assume we understand JEDEC type 0x30
+  if (Buffer[1] == 0x30) {
+    // it should be 512K
+    return 1<<Buffer[2]; //not really standard...
+  }
+
+  return 0;
+}
+
+
+
+// buffer must be at least 5 bytes to hold command
+STATIC
+INT32
+ReadSpi(UINT32 Addr, UINT8 *Buffer, UINT32 Len)
+{
+  INT32 ret;
+  Buffer[0]=0x0B; //send read data
+  Buffer[1]=(Addr>>16)&0xFF; // address MSB
+  Buffer[2]=(Addr>>8)&0xFF;  //
+  Buffer[3]=Addr&0xFF;       // address LSB
+  Buffer[4]=0;  //dummy
+
+  ret = DoSpiCommand(Buffer, Len, 5);
+  return ret;
+}
+
+// Walk the RPi's SPI flash volume to determine if there is
+// free space we may consume as the backing store for a UEFI
+// variable store volume. This is fairly safe as the entire volume
+// can be recovered using the Raspberry Pi OS image tool to create
+// an EEPROM update disk. We aren't going to bother to
+// attempt to contain it in their volume format, rather hiding in
+// the free/unclaimed space. If this space is corrupted via an update
+// done outside of our control, we will fallback to the original
+// RPI_EFI.FD variables. AKA we should never really be worse off.
+STATIC
+VOID
+WalkFlashVolume(void)
+{
+  UINT32 total_data;
+  UINT32 device_size;
+  UINT8 buffer[32];
+
+  device_size = ReadDeviceId();
+  // newer write location 00051100
+
+  for (total_data = 0; total_data < device_size; ) {
+    UINT32 len;
+    if (ReadSpi(total_data, buffer, 24)==24) {
+//    DEBUG ((DEBUG_ERROR, "%08X:%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n", total_data, buffer[0],buffer[1],buffer[2],buffer[3], buffer[4],buffer[5],buffer[6],buffer[7],
+//              buffer[8],buffer[9],buffer[10],buffer[11], buffer[12],buffer[13],buffer[14],buffer[15]));
+
+      len = 0; //(*(UINT8 *)&buffer[4])<<24;
+      len += (*(UINT8 *)&buffer[5])<<16;
+      len += (*(UINT8 *)&buffer[6])<<8;
+      len += (*(UINT8 *)&buffer[7]);
+
+      // round up to nearest 8 byte align?
+      len += 7;
+      len &= 0xFFFFF8;
+
+      buffer[24]=0;
+      DEBUG ((DEBUG_INFO, "%X len=%d filename=%a \n", *(UINT32 *)buffer,len,(char *)&buffer[8]));
+      if (*(UINT32 *)buffer==0xFFFFFFFF)
+        break;
+      total_data+=8+len;
+    } else {
+      DEBUG ((DEBUG_ERROR, "Didn't get correct amount of data from SPI, abort its use\n"));
+      return;
+    }
+  }
+
+  DEBUG ((DEBUG_INFO, "First free sector at %X free space remaining %dK \n", total_data,(device_size-total_data)/1024));
+  if ((device_size-total_data) > SIZE_128KB)
+  {
+    //start at the next 4k page
+    mFvInstance->FlashOffset = (total_data + SIZE_4KB) & 0xFFFFE000;
+    DEBUG ((DEBUG_INFO, "Start of Fv at %X\n", mFvInstance->FlashOffset));
+  }
+}
+
+
+STATIC
+INT32
+FlashRead(UINT32 Addr, UINT8 *Buffer, UINT32 Len)
+{
+  return ReadSpi(mFvInstance->FlashOffset+Addr, Buffer, Len);
+}
+
+STATIC
+VOID
+DisableSpiWp(void)
+{
+  UINT8 Buffer[32];
+  Buffer[0] = 0x06;
+
+  DoSpiCommand(Buffer, 0, 1);
+}
+
+STATIC
+INT32
+ReadSpiStatus(void)
+{
+  UINT8 Buffer[32];
+  Buffer[0] = 0x05;
+
+  DoSpiCommand(Buffer, 1, 1);
+
+  //DEBUG ((DEBUG_ERROR, "Read status %X\n", Buffer[0]));
+
+  return Buffer[0];
+}
+
+
+STATIC
+INTN
+WriteSpi(UINT32 Addr, UINT8 *SrcBuffer, UINT32 Len)
+{
+  UINT8 Buffer[280];
+  UINTN loop;
+  int additional = 0;
+
+  if (Len>256) Len=256;
+
+  // check if request crosses boundary
+  if (((Addr+Len-1) & 0xFFFFFF00) != (Addr & 0xFFFFFF00)) {
+    additional = (Addr+Len) & 0xFF;
+    Len -= additional;
+//      DEBUG ((DEBUG_ERROR, "Write broken into %X and %X\n",Len,additional));
+  }
+
+  do {
+//      DEBUG ((DEBUG_ERROR, "Do write for %X @ %X\n",Len,Addr));
+
+    DisableSpiWp();
+
+    while (ReadSpiStatus()!=2) {
+      DEBUG ((DEBUG_ERROR, "Spi status %X \n",ReadSpiStatus()));
+    }
+
+    Buffer[0] = 0x02; //write len
+    Buffer[1] = (Addr>>16)&0xFF;
+    Buffer[2] = (Addr>>8)&0xFF;
+    Buffer[3] = Addr & 0xFF;
+
+    CopyMem(&Buffer[4], SrcBuffer, Len);
+
+    DoSpiCommand(Buffer, 0, 4+Len);
+
+    loop = Len*30000*SPI_CS_READS_PER_US;
+    while (ReadSpiStatus() & 0x3) {
+      loop--;
+      if (loop==0) {
+        DEBUG ((DEBUG_ERROR, "Write still busy \n"));
+        break;
+      }
+    }
+
+    // deal with second block
+    if (additional) {
+      Addr += Len;
+      SrcBuffer += Len;
+      Len = additional;
+      additional = 0;
+    } else {
+      Len = 0;
+    }
+
+  } while (Len);
+  return 0;
+}
+
+
+STATIC
+INTN
+Erase4kSpi(UINT32 Addr)
+{
+  UINT8 Buffer[32];
+  int loop = 300000*SPI_CS_READS_PER_US;
+
+//  DEBUG ((DEBUG_ERROR, "Do erase %X\n",Addr));
+
+  DisableSpiWp();
+
+  Buffer[0] = 0x20; //erase 4k
+  Buffer[1] = (Addr>>16)&0xFF;
+  Buffer[2] = (Addr>>8)&0xFF;
+  Buffer[3] = Addr & 0xFF;
+
+  DoSpiCommand(Buffer, 0, 4);
+
+  while (ReadSpiStatus() & 0x3) {
+    loop--;
+    if (loop==0) {
+        DEBUG ((DEBUG_ERROR, "Erase still busy \n"));
+        break;
+    }
+  }
+  return 0;
+}
+
+EFI_STATUS
+FlashWrite (
+  IN     UINTN Address,
+  IN     UINT8 *Buffer,
+  IN     UINTN NumBytes
+  )
+{
+  UINTN Off=Address;
+  UINT8 VerifyBuffer[256];
+
+//  DEBUG ((DEBUG_INFO, "Flash Write %X %X! off=%X\n",Address, NumBytes, Off));
+
+
+//  return EFI_SUCCESS;
+
+
+  while (NumBytes>0) {
+    int write_bytes = NumBytes;
+    if (write_bytes > 256) {
+        write_bytes = 256;
+    }
+    WriteSpi(mFvInstance->FlashOffset+Off, Buffer, write_bytes);
+    if (write_bytes<=256) {
+      ReadSpi(mFvInstance->FlashOffset+Off, VerifyBuffer, write_bytes);
+      if (CompareMem(VerifyBuffer,Buffer, write_bytes) !=0) {
+          int len;
+          for (len=0;len<write_bytes;len++) {
+              DEBUG ((DEBUG_ERROR, "Data mismatch read=%X src=%X\n",VerifyBuffer[len],Buffer[len]));
+          }
+      }
+    }
+
+    Off += write_bytes;
+    Buffer += write_bytes;
+    NumBytes -= write_bytes;
+  }
+
+  return EFI_SUCCESS;
+}
+
 
 EFI_STATUS
 VarStoreWrite (
@@ -93,8 +432,45 @@ VarStoreWrite (
   IN     UINT8 *Buffer
   )
 {
+
+//  DEBUG ((DEBUG_INFO, "Varstore Write %X %X! off=%X\n",Address, *NumBytes, Off));
+
+  if (Address<mFvInstance->FvBase) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+
   CopyMem ((VOID*)Address, Buffer, *NumBytes);
-  mFvInstance->Dirty = TRUE;
+
+  if (mFvInstance->FlashOffset) {
+    FlashWrite(Address-mFvInstance->FvBase, Buffer, *NumBytes);
+  } else {
+    mFvInstance->Dirty = TRUE;
+  }
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+FlashErase (
+  IN UINTN Address,
+  IN UINTN LbaLength
+  )
+{
+  UINTN Off=Address;
+
+//  DEBUG ((DEBUG_INFO, "Spi Erase %X %X off %X!\n",Address, LbaLength, Off));
+
+  while (LbaLength>0) {
+    int erase_bytes = LbaLength;
+    if (erase_bytes > 4096) {
+      erase_bytes = 4096;
+    }
+    Erase4kSpi(mFvInstance->FlashOffset+Off);
+
+    Off+=erase_bytes;
+    LbaLength -= erase_bytes;
+  }
 
   return EFI_SUCCESS;
 }
@@ -106,8 +482,18 @@ VarStoreErase (
   IN UINTN LbaLength
   )
 {
+
+//  DEBUG ((DEBUG_INFO, "Varstore Erase %X %X off %X!\n",Address, LbaLength, Off));
+  if (Address<mFvInstance->FvBase) {
+    return EFI_INVALID_PARAMETER;
+  }
   SetMem ((VOID*)Address, LbaLength, 0xff);
-  mFvInstance->Dirty = TRUE;
+
+  if (mFvInstance->FlashOffset) {
+    FlashErase(Address-mFvInstance->FvBase, LbaLength);
+  } else {
+    mFvInstance->Dirty = TRUE;
+  }
 
   return EFI_SUCCESS;
 }
@@ -151,6 +537,24 @@ FvbGetLbaAddress (
 
 --*/
 {
+/*  UINTN Offset;
+
+
+    if (LbaAddress != NULL) {
+        Offset = (UINTN)MultU64x32 (Lba, 4096);
+        *LbaAddress = mFvInstance->FvBase + Offset;
+    }
+
+    if (LbaLength != NULL) {
+        *LbaLength = 4096;
+    }
+
+    if (NumOfBlocks != NULL) {
+        *NumOfBlocks = 32-Lba;
+    }
+    return EFI_SUCCESS;
+*/
+
   UINT32 NumBlocks;
   UINT32 BlockLength;
   UINTN Offset;
@@ -162,12 +566,25 @@ FvbGetLbaAddress (
   Offset = 0;
   BlockMap = &(mFvInstance->VolumeHeader->BlockMap[0]);
 
+//  DEBUG ((DEBUG_INFO, "Lba translate %X!\n",Lba));
   //
   // Parse the blockmap of the FV to find which map entry the Lba belongs to.
   //
   while (TRUE) {
-    NumBlocks = BlockMap->NumBlocks;
-    BlockLength = BlockMap->Length;
+    if (BlockMap->NumBlocks==0xFFFFFFFF) {
+      NumBlocks = (FixedPcdGet32 (PcdFlashNvStorageVariableSize) +
+                   FixedPcdGet32 (PcdFlashNvStorageFtwWorkingSize) +
+                   FixedPcdGet32 (PcdFlashNvStorageFtwSpareSize) +
+                   FixedPcdGet32 (PcdNvStorageEventLogSize)) /
+          FixedPcdGet32 (PcdFirmwareBlockSize);
+    } else {
+      NumBlocks = BlockMap->NumBlocks;
+    }
+    if (BlockMap->Length==0xFFFFFFFF) {
+      BlockLength = FixedPcdGet32 (PcdFirmwareBlockSize);
+    } else {
+      BlockLength = BlockMap->Length;
+    }
 
     if (NumBlocks == 0 || BlockLength == 0) {
       return EFI_INVALID_PARAMETER;
@@ -199,6 +616,7 @@ FvbGetLbaAddress (
     Offset = Offset + NumBlocks * BlockLength;
     BlockMap++;
   }
+
 }
 
 
@@ -245,6 +663,8 @@ Returns:
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
+//  DEBUG ((DEBUG_INFO, "Erase: LBA=%X BlockSize=%X Blocks=%X\n", Lba, LbaAddress,LbaLength));
 
   return VarStoreErase (
            LbaAddress,
@@ -371,6 +791,12 @@ FvbSetVolumeAttributes (
   *AttribPtr = (*AttribPtr) | NewStatus;
   *Attributes = *AttribPtr;
 
+  if (mFvInstance->FlashOffset) {
+    FlashErase (0, 0x1000);
+    FlashWrite (0, (UINT8*)mFvInstance->VolumeHeader, 0x1000);
+  }
+
+
   return EFI_SUCCESS;
 }
 
@@ -416,12 +842,17 @@ FvbProtocolGetBlockSize (
 
 --*/
 {
-  return FvbGetLbaAddress (
-           Lba,
-           NULL,
-           BlockSize,
-           NumOfBlocks
-         );
+  EFI_STATUS Status;
+
+  Status = FvbGetLbaAddress (
+      Lba,
+      NULL,
+      BlockSize,
+      NumOfBlocks
+      );
+
+//  DEBUG ((DEBUG_INFO, "GetBlockSize: LBA=%X BlockSize=%X Blocks=%X\n", Lba, *BlockSize,*NumOfBlocks));
+  return Status;
 }
 
 
@@ -602,7 +1033,7 @@ FvbProtocolWrite (
   EFI_FVB_ATTRIBUTES_2 Attributes;
   UINTN LbaAddress;
   UINTN LbaLength;
-  EFI_STATUS Status;
+  EFI_STATUS Status = EFI_SUCCESS;
   EFI_STATUS ReturnStatus;
 
   //
@@ -617,6 +1048,7 @@ FvbProtocolWrite (
   }
 
   Status = FvbGetLbaAddress (Lba, &LbaAddress, &LbaLength, NULL);
+//  DEBUG ((DEBUG_INFO, "Write: LBA=%X BlockAddr=%X BlockSize=%X\n", Lba, LbaAddress,LbaLength));
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -637,6 +1069,7 @@ FvbProtocolWrite (
     return EFI_INVALID_PARAMETER;
   }
 
+  // forces this write to split
   if (LbaLength < (*NumBytes + Offset)) {
     *NumBytes = (UINT32)(LbaLength - Offset);
     Status = EFI_BAD_BUFFER_SIZE;
@@ -789,13 +1222,14 @@ ValidateFvHeader (
     Expected =
       (UINT16)(((UINTN)FwVolHeader->Checksum + 0x10000 - Checksum) & 0xffff);
 
-    DEBUG ((DEBUG_INFO, "FV@%p Checksum is 0x%x, expected 0x%x\n",
-      FwVolHeader, FwVolHeader->Checksum, Expected));
+//    DEBUG ((DEBUG_INFO, "FV@%p Checksum is 0x%x, expected 0x%x\n",   FwVolHeader, FwVolHeader->Checksum, Expected));
     return EFI_NOT_FOUND;
   }
 
   return EFI_SUCCESS;
 }
+
+
 
 
 EFI_STATUS
@@ -825,6 +1259,20 @@ FvbInitialize (
   UINTN NumOfBlocks;
   RETURN_STATUS PcdStatus;
   UINTN StartOffset;
+  EFI_FIRMWARE_VOLUME_HEADER SpiBuffer[2];
+
+
+  GpioPinFuncSet (40, GPIO_FSEL_ALT4);
+  GpioPinFuncSet (41, GPIO_FSEL_ALT4);
+  GpioPinFuncSet (42, GPIO_FSEL_ALT4);
+  GpioPinFuncSet (43, GPIO_FSEL_ALT4);
+  GpioPinFuncSet (44, GPIO_FSEL_ALT4);
+  GpioPinFuncSet (45, GPIO_FSEL_ALT4);
+
+  GpioSetPull (43, GPIO_PULL_DOWN);
+  GpioSetPull (44, GPIO_PULL_DOWN);
+  GpioSetPull (45, GPIO_PULL_DOWN);
+
 
   BaseAddress = PcdGet32 (PcdNvStorageVariableBase);
   Length = (FixedPcdGet32 (PcdFlashNvStorageVariableSize) +
@@ -833,6 +1281,7 @@ FvbInitialize (
     FixedPcdGet32 (PcdNvStorageEventLogSize));
   StartOffset = BaseAddress - FixedPcdGet64 (PcdFdBaseAddress);
 
+
   BufferSize = sizeof (EFI_FW_VOL_INSTANCE);
 
   mFvInstance = AllocateRuntimeZeroPool (BufferSize);
@@ -840,13 +1289,41 @@ FvbInitialize (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  mFvInstance->FvBase = (UINTN)BaseAddress;
+  mFvInstance->FvBase = (UINTN)BaseAddress; //union with volumeheader
   mFvInstance->FvLength = (UINTN)Length;
-  mFvInstance->Offset = StartOffset;
+  mFvInstance->SpiBase = BCM2836_SPI0_BASE_ADDRESS;
+//  mFvInstance->FlashOffset = 0x52000;
+  mFvInstance->Offset = StartOffset;  // Start offset of RPI_EFI.FD file
   /*
    * Should I parse config.txt instead and find the real name?
    */
   mFvInstance->MappedFile = L"RPI_EFI.FD";
+
+// ifdef rpi4 here?
+  WalkFlashVolume ();
+
+  if (mFvInstance->FlashOffset) {
+    if (FlashRead(0, (UINT8*)SpiBuffer, sizeof(EFI_FIRMWARE_VOLUME_HEADER)*2)!=sizeof(EFI_FIRMWARE_VOLUME_HEADER)*2) {
+      DEBUG ((DEBUG_ERROR, "Unable to read data from SPI\n"));
+      mFvInstance->FlashOffset = 0;
+    } else  {
+      Status = ValidateFvHeader (SpiBuffer);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "Invalid header on SPI, recreate volume\n"));
+        FlashErase (0, Length);
+        FlashWrite (0, (UINT8*)BaseAddress, Length);
+
+          // the variable store goes bonkers if the header isn't right, grab the one from the fd image
+//        FlashWrite (0, (UINT8*)BaseAddress, sizeof(EFI_FVB_MEDIA_INFO)+sizeof(VARIABLE_STORE_HEADER));
+      }
+
+      // read the entire varstore...
+      if (FlashRead(0, (UINT8*)BaseAddress, Length)!=Length) {
+        DEBUG ((DEBUG_ERROR, "Failed to read entire flash region\n"));
+      }
+    }
+  }
+
 
   Status = ValidateFvHeader (mFvInstance->VolumeHeader);
   if (!EFI_ERROR (Status)) {
@@ -899,6 +1376,7 @@ FvbInitialize (
       MaxLbaSize = PtrBlockMapEntry->Length;
     }
 
+//  DEBUG ((DEBUG_ERROR, "NumBlock+%d\n",PtrBlockMapEntry->NumBlocks));
     NumOfBlocks = NumOfBlocks + PtrBlockMapEntry->NumBlocks;
   }
 

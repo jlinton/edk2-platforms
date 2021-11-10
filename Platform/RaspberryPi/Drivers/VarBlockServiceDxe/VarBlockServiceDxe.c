@@ -104,6 +104,7 @@ FvbVirtualAddressChangeEvent (
 
 --*/
 {
+  EfiConvertPointer (0x0, (VOID**)&mFvInstance->SpiBase); //do we need to convert SpiBase?
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->FvBase);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->VolumeHeader);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance);
@@ -175,6 +176,10 @@ DumpVars (
 
   if (!mFvInstance->Dirty) {
     DEBUG ((DEBUG_INFO, "Variables not dirty, not dumping!\n"));
+	// if there is a valid SPI flash volume in use, don't delay the reset
+	if (mFvInstance->FlashOffset) {
+	  PcdSet32S (PcdPlatformResetDelay, 0);
+	}
     return;
   }
 
