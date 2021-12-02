@@ -109,6 +109,40 @@
 #define BCM2836_SPI2_LENGTH                                 0x00000040
 #define BCM2836_SPI2_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_SPI2_OFFSET)
 
+/* SPI register offsets */
+#define BCM2835_SPI_CS                                      0x00
+#define BCM2835_SPI_FIFO                                    0x04
+#define BCM2835_SPI_CLK                                     0x08
+#define BCM2835_SPI_DLEN                                    0x0c
+#define BCM2835_SPI_LTOH                                    0x10
+#define BCM2835_SPI_DC                                      0x14
+
+/* Bitfields in CS */
+#define BCM2835_SPI_CS_LEN_LONG                             0x02000000
+#define BCM2835_SPI_CS_DMA_LEN                              0x01000000
+#define BCM2835_SPI_CS_CSPOL2                               0x00800000
+#define BCM2835_SPI_CS_CSPOL1                               0x00400000
+#define BCM2835_SPI_CS_CSPOL0                               0x00200000
+#define BCM2835_SPI_CS_RXF                                  0x00100000
+#define BCM2835_SPI_CS_RXR                                  0x00080000
+#define BCM2835_SPI_CS_TXD                                  0x00040000
+#define BCM2835_SPI_CS_RXD                                  0x00020000
+#define BCM2835_SPI_CS_DONE                                 0x00010000
+#define BCM2835_SPI_CS_LEN                                  0x00002000
+#define BCM2835_SPI_CS_REN                                  0x00001000
+#define BCM2835_SPI_CS_ADCS                                 0x00000800
+#define BCM2835_SPI_CS_INTR                                 0x00000400
+#define BCM2835_SPI_CS_INTD                                 0x00000200
+#define BCM2835_SPI_CS_DMAEN                                0x00000100
+#define BCM2835_SPI_CS_TA                                   0x00000080
+#define BCM2835_SPI_CS_CSPOL                                0x00000040
+#define BCM2835_SPI_CS_CLEAR_RX                             0x00000020
+#define BCM2835_SPI_CS_CLEAR_TX                             0x00000010
+#define BCM2835_SPI_CS_CPOL                                 0x00000008
+#define BCM2835_SPI_CS_CPHA                                 0x00000004
+#define BCM2835_SPI_CS_CS_10                                0x00000002
+#define BCM2835_SPI_CS_CS_01                                0x00000001
+
 /* dma constants */
 #define BCM2836_DMA0_OFFSET                                 0x00007000
 #define BCM2836_DMA0_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_DMA0_OFFSET)
