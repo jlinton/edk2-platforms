@@ -203,56 +203,6 @@ Device (VCSM)
   }
 }
 
-// Description: GPIO
-Device (GPI0)
-{
-  Name (_HID, "BCM2845")
-  Name (_CID, "BCM2845")
-  Name (_UID, 0x0)
-  Name (_CCA, 0x0)
-  Method (_STA)
-  {
-    Return(0xf)
-  }
-  Name (RBUF, ResourceTemplate ()
-  {
-    MEMORY32FIXED (ReadWrite, 0, GPIO_LENGTH, RMEM)
-    Interrupt (ResourceConsumer, Level, ActiveHigh, Shared)
-    {
-      BCM2386_GPIO_INTERRUPT0, BCM2386_GPIO_INTERRUPT1,
-      BCM2386_GPIO_INTERRUPT2, BCM2386_GPIO_INTERRUPT3
-    }
-  })
-  Method (_CRS, 0x0, Serialized)
-  {
-    MEMORY32SETBASE (RBUF, RMEM, RBAS, GPIO_OFFSET)
-    Return (^RBUF)
-  }
-}
-
-// Description: I2C
-Device (I2C1)
-{
-  Name (_HID, "BCM2841")
-  Name (_CID, "BCM2841")
-  Name (_UID, 0x1)
-  Name (_CCA, 0x0)
-  Method (_STA)
-  {
-    Return(0xf)
-  }
-  Name (RBUF, ResourceTemplate ()
-  {
-    MEMORY32FIXED (ReadWrite, 0, BCM2836_I2C1_LENGTH, RMEM)
-    Interrupt (ResourceConsumer, Level, ActiveHigh, Shared) { BCM2836_I2C1_INTERRUPT }
-    PinFunction (Exclusive, PullUp, BCM_ALT0, "\\_SB.GDV0.GPI0", 0, ResourceConsumer, , ) { 2, 3 }
-  })
-  Method (_CRS, 0x0, Serialized)
-  {
-    MEMORY32SETBASE (RBUF, RMEM, RBAS, BCM2836_I2C1_OFFSET)
-    Return (^RBUF)
-  }
-}
 
 // I2C2 is the HDMI DDC connection
 Device (I2C2)
@@ -278,81 +228,6 @@ Device (I2C2)
   }
 }
 
-// SPI
-Device (SPI0)
-{
-  Name (_HID, "BCM2838")
-  Name (_CID, "BCM2838")
-  Name (_UID, 0x0)
-  Name (_CCA, 0x0)
-  Method (_STA)
-  {
-    Return (0xf)
-  }
-  Name (RBUF, ResourceTemplate ()
-  {
-    MEMORY32FIXED (ReadWrite, 0, BCM2836_SPI0_LENGTH, RMEM)
-    Interrupt (ResourceConsumer, Level, ActiveHigh, Shared) { BCM2836_SPI0_INTERRUPT }
-    PinFunction (Exclusive, PullDown, BCM_ALT0, "\\_SB.GDV0.GPI0", 0, ResourceConsumer, , ) { 9, 10, 11 } // MISO, MOSI, SCLK
-    PinFunction (Exclusive, PullUp, BCM_ALT0, "\\_SB.GDV0.GPI0", 0, ResourceConsumer, , ) { 8 } // CE0
-    PinFunction (Exclusive, PullUp, BCM_ALT0, "\\_SB.GDV0.GPI0", 0, ResourceConsumer, , ) { 7 } // CE1
-  })
-
-  Method (_CRS, 0x0, Serialized)
-  {
-    MEMORY32SETBASE (RBUF, RMEM, RBAS, BCM2836_SPI0_OFFSET)
-    Return (^RBUF)
-  }
-}
-
-Device (SPI1)
-{
-  Name (_HID, "BCM2839")
-  Name (_CID, "BCM2839")
-  Name (_UID, 0x1)
-  Name (_CCA, 0x0)
-  Name (_DEP, Package() { \_SB.GDV0.RPIQ })
-  Method (_STA)
-  {
-    Return (0xf)
-  }
-  Name (RBUF, ResourceTemplate ()
-  {
-    MEMORY32FIXED (ReadWrite, 0, BCM2836_SPI1_LENGTH, RMEM)
-    Interrupt (ResourceConsumer, Level, ActiveHigh, Shared,) { BCM2836_SPI1_INTERRUPT }
-    PinFunction (Exclusive, PullDown, BCM_ALT4, "\\_SB.GDV0.GPI0", 0, ResourceConsumer, , ) { 19, 20, 21 } // MISO, MOSI, SCLK
-    PinFunction (Exclusive, PullDown, BCM_ALT4, "\\_SB.GDV0.GPI0", 0, ResourceConsumer, , ) { 16 } // CE2
-  })
-
-  Method (_CRS, 0x0, Serialized)
-  {
-    MEMORY32SETBASE (RBUF, RMEM, RBAS, BCM2836_SPI1_OFFSET)
-    Return (^RBUF)
-  }
-}
-
-// SPI2 has no pins on GPIO header
-// Device (SPI2)
-// {
-//   Name (_HID, "BCM2839")
-//   Name (_CID, "BCM2839")
-//   Name (_UID, 0x2)
-//   Name (_CCA, 0x0)
-//   Name (_DEP, Package() { \_SB.GDV0.RPIQ })
-//   Method (_STA)
-//   {
-//     Return (0xf)     // Disabled
-//   }
-//   Method (_CRS, 0x0, Serialized)
-//   {
-//     Name (RBUF, ResourceTemplate ()
-//     {
-//       MEMORY32FIXED (ReadWrite, BCM2836_SPI2_BASE_ADDRESS, BCM2836_SPI2_LENGTH, RMEM)
-//       Interrupt (ResourceConsumer, Level, ActiveHigh, Shared,) { BCM2836_SPI2_INTERRUPT }
-//     })
-//     Return (RBUF)
-//   }
-// }
 
 // PWM Driver
 Device (PWM0)
@@ -393,5 +268,4 @@ Device (PWM0)
 }
 
 include ("Uart.asl")
-include ("Rhpx.asl")
 include ("Sdhc.asl")
