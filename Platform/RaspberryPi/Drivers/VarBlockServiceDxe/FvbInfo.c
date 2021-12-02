@@ -11,12 +11,7 @@
 #include <Guid/SystemNvDataGuid.h>
 #include <Library/BaseLib.h>
 #include <Library/PcdLib.h>
-
-typedef struct {
-  UINT64                      FvLength;
-  EFI_FIRMWARE_VOLUME_HEADER  FvbInfo;
-  EFI_FV_BLOCK_MAP_ENTRY      End[1];
-} EFI_FVB_MEDIA_INFO;
+#include "VarBlockService.h"
 
 EFI_FVB_MEDIA_INFO  mPlatformFvbMediaInfo[] = {
   //
@@ -38,6 +33,7 @@ EFI_FVB_MEDIA_INFO  mPlatformFvbMediaInfo[] = {
       FixedPcdGet32 (PcdNvStorageEventLogSize),
       EFI_FVH_SIGNATURE,
       EFI_FVB2_MEMORY_MAPPED |
+        EFI_FVB2_STICKY_WRITE |
         EFI_FVB2_READ_ENABLED_CAP |
         EFI_FVB2_READ_STATUS |
         EFI_FVB2_WRITE_ENABLED_CAP |
