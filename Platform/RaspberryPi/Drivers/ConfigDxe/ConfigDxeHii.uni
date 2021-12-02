@@ -67,6 +67,11 @@
 #string STR_ADVANCED_XHCIRELOAD_DISABLE #language en-US "Disabled"
 #string STR_ADVANCED_XHCIRELOAD_RELOAD  #language en-US "Reload"
 
+#string STR_ADVANCED_ENABLEGPIO_PROMPT  #language en-US "Export GPIO devices to OS"
+#string STR_ADVANCED_ENABLEGPIO_HELP    #language en-US "OS can see the GPIO device and some low level SPI and I2C interfaces. Enabling this option will disable runtime variable support."
+#string STR_ADVANCED_ENABLEGPIO_DISABLE #language en-US "Disabled"
+#string STR_ADVANCED_ENABLEGPIO_ENABLE  #language en-US "Enable"
+
 #string STR_ADVANCED_ASSET_TAG_PROMPT #language en-US "Asset Tag"
 #string STR_ADVANCED_ASSET_TAG_HELP   #language en-US "Set the system Asset Tag"
 
