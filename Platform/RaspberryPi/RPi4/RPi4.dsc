@@ -32,6 +32,7 @@
   DEFINE SECURE_BOOT_ENABLE      = FALSE
   DEFINE INCLUDE_TFTP_COMMAND    = FALSE
   DEFINE DEBUG_PRINT_ERROR_LEVEL = 0x8000004F
+  DEFINE SPI_VARIABLES           = 0
 
 !ifndef TFA_BUILD_ARTIFACTS
   #
@@ -249,7 +250,7 @@
 ###################################################################################################
 
 [BuildOptions]
-  GCC:*_*_*_CC_FLAGS          = -DRPI_MODEL=4
+  GCC:*_*_*_CC_FLAGS          = -DRPI_MODEL=4 -DSPI_VARIABLES=$(SPI_VARIABLES)
   GCC:*_*_*_PP_FLAGS          = -DRPI_MODEL=4
   GCC:*_*_*_ASLPP_FLAGS       = -DRPI_MODEL=4
   GCC:*_*_*_ASLCC_FLAGS       = -DRPI_MODEL=4

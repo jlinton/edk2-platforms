@@ -8,8 +8,10 @@
  *
  **/
 
+#include <Library/GpioLib.h>
+#include <Protocol/RpiFirmware.h>
 #include "VarBlockService.h"
-
+#include "ConfigVars.h"
 //
 // Minimum delay to enact before reset, when variables are dirty (in μs).
 // Needed to ensure that SSD-based USB 3.0 devices have time to flush their
@@ -104,11 +106,18 @@ FvbVirtualAddressChangeEvent (
 
 --*/
 {
+  if (mFvInstance->DisableRuntime) {
+    mFvInstance->FlashOffset = 0; //disable flash writes
+  }
+
+  EfiConvertPointer (0x0, (VOID**)&mFvInstance->SpiBase);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->FvBase);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->VolumeHeader);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance);
+  GpioSetupRuntime ();
 }
 
+EFI_EVENT VirtualAddressChangeEvent;
 
 VOID
 InstallVirtualAddressChangeHandler (
@@ -116,7 +125,6 @@ InstallVirtualAddressChangeHandler (
   )
 {
   EFI_STATUS Status;
-  EFI_EVENT VirtualAddressChangeEvent;
 
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
@@ -175,6 +183,16 @@ DumpVars (
 
   if (!mFvInstance->Dirty) {
     DEBUG ((DEBUG_INFO, "Variables not dirty, not dumping!\n"));
+    // if there is a valid SPI flash volume in use, don't delay the reset
+    if (mFvInstance->FlashOffset) {
+      PcdSet32S (PcdPlatformResetDelay, 0);
+    }
+    if ((PcdGet32 (PcdSystemTableMode)  != SYSTEM_TABLE_MODE_ACPI ) ||
+        PcdGet32 (PcdEnableGpio)) {
+      DEBUG ((DEBUG_INFO, "Runtime variable support turned off!\n"));
+      mFvInstance->DisableRuntime = TRUE;
+    }
+
     return;
   }
 
@@ -198,6 +216,24 @@ DumpVars (
   }
 
   mFvInstance->Dirty = FALSE;
+}
+
+STATIC
+VOID
+EnableAudioLdo (VOID)
+{
+  EFI_STATUS Status;
+  RASPBERRY_PI_FIRMWARE_PROTOCOL *mFwProtocol;
+
+  Status = gBS->LocateProtocol (&gRaspberryPiFirmwareProtocolGuid,
+                                NULL, (VOID**)&mFwProtocol);
+  ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  mFwProtocol->SetLdoRegState (1);
+  ASSERT_EFI_ERROR (Status);
 }
 
 
@@ -230,6 +266,21 @@ ReadyToBootHandler (
   DumpVars (NULL, NULL);
   Status = gBS->CloseEvent (Event);
   ASSERT_EFI_ERROR (Status);
+
+  EnableAudioLdo ();
+}
+
+
+
+VOID
+ExitBootServicesHandler (
+  IN EFI_EVENT Event,
+  IN VOID *Context
+  )
+{
+  if (mFvInstance->DisableRuntime) {
+    mFvInstance->FlashOffset = 0; //disable flash writes
+  }
 }
 
 
@@ -241,6 +292,7 @@ InstallDumpVarEventHandlers (
   EFI_STATUS Status;
   EFI_EVENT ResetEvent;
   EFI_EVENT ReadyToBootEvent;
+  EFI_EVENT ExitBootServicesEvent;
 
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
@@ -261,6 +313,19 @@ InstallDumpVarEventHandlers (
                   &ReadyToBootEvent
                 );
   ASSERT_EFI_ERROR (Status);
+
+  // use exit boot services now too because we can't
+  // depend on address space changes following Ards
+  // removal of the call in linux..
+  Status = gBS->CreateEvent (
+                  EVT_SIGNAL_EXIT_BOOT_SERVICES,
+                  TPL_CALLBACK,
+                  ExitBootServicesHandler,
+                  NULL,
+                  &ExitBootServicesEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
+
 }
 
 
