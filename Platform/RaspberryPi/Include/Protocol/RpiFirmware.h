@@ -171,6 +171,12 @@ EFI_STATUS
   UINTN State
   );
 
+typedef
+EFI_STATUS
+(EFIAPI *SET_LDO_REGULATOR) (
+  UINTN State
+  );
+
 typedef struct {
   SET_POWER_STATE        SetPowerState;
   GET_MAC_ADDRESS        GetMacAddress;
@@ -197,6 +203,7 @@ typedef struct {
   GET_CLOCK_STATE        GetClockState;
   SET_CLOCK_STATE        SetClockState;
   GPIO_SET_CFG           SetGpioConfig;
+  SET_LDO_REGULATOR      SetLdoRegState;
 } RASPBERRY_PI_FIRMWARE_PROTOCOL;
 
 extern EFI_GUID gRaspberryPiFirmwareProtocolGuid;
