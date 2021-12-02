@@ -503,6 +503,22 @@ ApplyVariables (
     DEBUG ((DEBUG_INFO, "Current CPU speed is %u MHz\n", Rate / FREQ_1_MHZ));
   }
 
+  if (mModelFamily == 4) {
+    Status = gDS->AddMemorySpace (EfiGcdMemoryTypeMemoryMappedIo, BCM2836_SPI0_BASE_ADDRESS,
+                                  SIZE_4KB, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR (Status);
+    Status = gDS->SetMemorySpaceAttributes (BCM2836_SPI0_BASE_ADDRESS,
+                                            SIZE_4KB, EFI_MEMORY_UC|EFI_MEMORY_RUNTIME);
+
+    Status = gDS->AddMemorySpace (EfiGcdMemoryTypeMemoryMappedIo, GPIO_BASE_ADDRESS,
+                                  SIZE_4KB, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR (Status);
+    Status = gDS->SetMemorySpaceAttributes (GPIO_BASE_ADDRESS,
+                                            SIZE_4KB, EFI_MEMORY_UC|EFI_MEMORY_RUNTIME);
+
+    ASSERT_EFI_ERROR (Status);
+  }
+
   if (mModelFamily >= 4 && PcdGet32 (PcdRamMoreThan3GB) != 0 &&
       PcdGet32 (PcdRamLimitTo3GB) == 0) {
     UINT64 SystemMemorySize;
