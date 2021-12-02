@@ -8,8 +8,10 @@
  *
  **/
 
+#include <Library/GpioLib.h>
+#include <Protocol/RpiFirmware.h>
 #include "VarBlockService.h"
-
+#include "ConfigVars.h"
 //
 // Minimum delay to enact before reset, when variables are dirty (in μs).
 // Needed to ensure that SSD-based USB 3.0 devices have time to flush their
@@ -104,9 +106,14 @@ FvbVirtualAddressChangeEvent (
 
 --*/
 {
+  if (mFvInstance->DisableRuntime) {
+    mFvInstance->FlashOffset = 0; //disable flash writes
+  }
+  EfiConvertPointer (0x0, (VOID**)&mFvInstance->SpiBase);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->FvBase);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->VolumeHeader);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance);
+  GpioSetupRuntime ();
 }
 
 
@@ -175,6 +182,15 @@ DumpVars (
 
   if (!mFvInstance->Dirty) {
     DEBUG ((DEBUG_INFO, "Variables not dirty, not dumping!\n"));
+    // if there is a valid SPI flash volume in use, don't delay the reset
+    if (mFvInstance->FlashOffset) {
+      PcdSet32S (PcdPlatformResetDelay, 0);
+    }
+    if ((PcdGet32 (PcdSystemTableMode) == SYSTEM_TABLE_MODE_DT) ||
+        PcdGet32 (PcdEnableGpio)) {
+      mFvInstance->DisableRuntime = TRUE;
+    }
+
     return;
   }
 
@@ -198,6 +214,24 @@ DumpVars (
   }
 
   mFvInstance->Dirty = FALSE;
+}
+
+STATIC
+VOID
+EnableAudioLdo (VOID)
+{
+  EFI_STATUS Status;
+  RASPBERRY_PI_FIRMWARE_PROTOCOL *mFwProtocol;
+
+  Status = gBS->LocateProtocol (&gRaspberryPiFirmwareProtocolGuid,
+                                NULL, (VOID**)&mFwProtocol);
+  ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  mFwProtocol->SetLdoRegState (1);
+  ASSERT_EFI_ERROR (Status);
 }
 
 
@@ -230,6 +264,8 @@ ReadyToBootHandler (
   DumpVars (NULL, NULL);
   Status = gBS->CloseEvent (Event);
   ASSERT_EFI_ERROR (Status);
+
+  EnableAudioLdo ();
 }
 
 
