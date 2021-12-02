@@ -533,6 +533,12 @@
   #
   gRaspberryPiTokenSpaceGuid.PcdXhciReload|L"XhciReload"|gConfigDxeFormSetGuid|0x0|0
 
+  # Export GPIO block to OS
+  #
+  # 1  - Yes (for legacy reasons)
+  #
+  gRaspberryPiTokenSpaceGuid.PcdEnableGpio|L"EnableGpio"|gConfigDxeFormSetGuid|0x0|1
+
   #
   # Common UEFI ones.
   #
