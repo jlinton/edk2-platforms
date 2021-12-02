@@ -96,6 +96,7 @@
   gRaspberryPiTokenSpaceGuid.PcdUartInUse
   gRaspberryPiTokenSpaceGuid.PcdXhciPci
   gRaspberryPiTokenSpaceGuid.PcdXhciReload
+  gRaspberryPiTokenSpaceGuid.PcdEnableGpio
 
 [Depex]
   gPcdProtocolGuid AND gRaspberryPiFirmwareProtocolGuid

@@ -66,6 +66,11 @@ formset
       name  = XhciReload,
       guid  = CONFIGDXE_FORM_SET_GUID;
 
+    efivarstore ADVANCED_ENABLEGPIO_VARSTORE_DATA,
+      attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+      name  = EnableGpio,
+      guid  = CONFIGDXE_FORM_SET_GUID;
+
     efivarstore SYSTEM_TABLE_MODE_VARSTORE_DATA,
       attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
       name  = SystemTableMode,
@@ -243,6 +248,16 @@ formset
               option text = STRING_TOKEN(STR_ADVANCED_XHCIRELOAD_RELOAD), value = 1, flags = 0;
             endoneof;
           endif;
+        endif;
+
+        grayoutif ideqval SystemTableMode.Mode == SYSTEM_TABLE_MODE_DT;
+          oneof varid = EnableGpio.Value,
+            prompt      = STRING_TOKEN(STR_ADVANCED_ENABLEGPIO_PROMPT),
+            help        = STRING_TOKEN(STR_ADVANCED_ENABLEGPIO_HELP),
+            flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+            option text = STRING_TOKEN(STR_ADVANCED_ENABLEGPIO_DISABLE), value = 0, flags = DEFAULT;
+            option text = STRING_TOKEN(STR_ADVANCED_ENABLEGPIO_ENABLE), value = 1, flags = 0;
+          endoneof;
         endif;
 #endif
         string varid = AssetTag.AssetTag,
