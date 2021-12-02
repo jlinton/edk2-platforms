@@ -527,6 +527,12 @@
   #
   gRaspberryPiTokenSpaceGuid.PcdXhciPci|L"XhciPci"|gConfigDxeFormSetGuid|0x0|0
 
+  # DT contains XHCI quirk node (not valid on rpi3)
+  #
+  # 0  - DISABLED
+  #
+  gRaspberryPiTokenSpaceGuid.PcdXhciReload|L"XhciReload"|gConfigDxeFormSetGuid|0x0|0
+
   #
   # Common UEFI ones.
   #
