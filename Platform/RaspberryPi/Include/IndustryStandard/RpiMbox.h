@@ -92,6 +92,7 @@
 #define RPI_MBOX_NOTIFY_REBOOT                                0x00030048
 #define RPI_MBOX_GET_POE_HAT_VAL                              0x00030049
 #define RPI_MBOX_SET_POE_HAT_VAL                              0x00030050
+#define RPI_MBOX_SET_LDO_REGULATOR                            0x00030056
 #define RPI_MBOX_NOTIFY_XHCI_RESET                            0x00030058
 
 #define RPI_MBOX_SET_CLOCK_STATE                              0x00038001
