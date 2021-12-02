@@ -37,6 +37,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   Platform/RaspberryPi/RaspberryPi.dec
+  Silicon/Broadcom/Bcm283x/Bcm283x.dec
 
 [LibraryClasses]
   BaseLib
@@ -44,6 +45,7 @@
   DebugLib
   DevicePathLib
   DxeServicesTableLib
+  GpioLib
   MemoryAllocationLib
   PcdLib
   UefiBootServicesTableLib
@@ -61,6 +63,7 @@
   gEfiBlockIoProtocolGuid
   gEfiFirmwareVolumeBlockProtocolGuid           # PROTOCOL SOMETIMES_PRODUCED
   gEfiDevicePathProtocolGuid                    # PROTOCOL SOMETIMES_PRODUCED
+  gRaspberryPiFirmwareProtocolGuid              ## CONSUMES
 
 [FixedPcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
@@ -75,12 +78,15 @@
   gArmTokenSpaceGuid.PcdFdSize
 
 [Pcd]
+  gBcm283xTokenSpaceGuid.PcdBcm283xRegistersAddress
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
   gRaspberryPiTokenSpaceGuid.PcdNvStorageEventLogBase
   gRaspberryPiTokenSpaceGuid.PcdPlatformResetDelay
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+  gRaspberryPiTokenSpaceGuid.PcdSystemTableMode
+  gRaspberryPiTokenSpaceGuid.PcdEnableGpio
 
 [FeaturePcd]
 
