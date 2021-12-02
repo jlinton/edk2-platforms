@@ -45,4 +45,10 @@ GpioSetPull (
   IN  UINTN   Pud
 );
 
+VOID
+GpioSetupRuntime (
+  VOID
+);
+
+
 #endif /* __GPIO_LIB__ */
