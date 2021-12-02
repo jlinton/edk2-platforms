@@ -15,9 +15,21 @@
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/GpioLib.h>
+#include <Library/UefiRuntimeLib.h>
 #include <Library/TimerLib.h>
 #include <IndustryStandard/Bcm2836.h>
 #include <IndustryStandard/Bcm2836Gpio.h>
+
+
+STATIC EFI_PHYSICAL_ADDRESS GpioGfpSel0 = GPIO_GPFSEL0;
+
+VOID
+GpioSetupRuntime (
+  VOID
+  )
+{
+  EfiConvertPointer (0x0, (VOID**)&GpioGfpSel0);
+}
 
 STATIC
 VOID
@@ -30,7 +42,7 @@ GpioFSELModify (
   UINT32 Val;
   EFI_PHYSICAL_ADDRESS Reg;
 
-  Reg = RegIndex * sizeof (UINT32) + GPIO_GPFSEL0;
+  Reg = RegIndex * sizeof (UINT32) + GpioGfpSel0;
 
   ASSERT (Reg <= GPIO_GPFSEL5);
   ASSERT ((~ModifyMask & FunctionMask) == 0);
@@ -77,7 +89,7 @@ GpioPinFuncGet (
 
   RegIndex = Pin / 10;
   SelIndex = Pin % 10;
-  Reg = RegIndex * sizeof (UINT32) + GPIO_GPFSEL0;
+  Reg = RegIndex * sizeof (UINT32) + GpioGfpSel0;
 
   Val = MmioRead32 (Reg);
   Val >>= SelIndex * GPIO_FSEL_BITS_PER_PIN;
