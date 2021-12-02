@@ -41,6 +41,7 @@
   SsdtThermal.asl
   Xhci.asl
   Pci.asl
+  SsdtGpio.asl
 
 [Packages]
   ArmPkg/ArmPkg.dec
