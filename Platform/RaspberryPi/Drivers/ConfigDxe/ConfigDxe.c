@@ -838,6 +838,12 @@ STATIC CONST NAMESPACE_TABLES SdtTables[] = {
     NULL
   },
 #endif
+  {
+    SIGNATURE_64 ('R', 'P', 'I', '3', 'G', 'P', 'I', 'O'),
+    0,
+    0,
+    NULL
+  },
   { // DSDT
     SIGNATURE_64 ('R', 'P', 'I', 0, 0, 0, 0, 0),
     0,

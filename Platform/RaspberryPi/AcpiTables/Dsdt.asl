@@ -21,13 +21,6 @@
 
 #include "AcpiTables.h"
 
-#define BCM_ALT0 0x4
-#define BCM_ALT1 0x5
-#define BCM_ALT2 0x6
-#define BCM_ALT3 0x7
-#define BCM_ALT4 0x3
-#define BCM_ALT5 0x2
-
 //
 // The ASL compiler does not support argument arithmetic in functions
 // like QWordMemory (). So we need to instantiate dummy qword regions
