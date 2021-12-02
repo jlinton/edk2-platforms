@@ -309,11 +309,26 @@ SetupVariables (
       }
 
     }
+
+    Size = sizeof (UINT32);
+    Status = gRT->GetVariable (L"EnableGpio",
+                               &gConfigDxeFormSetGuid,
+                               NULL, &Size, &Var32);
+    if (EFI_ERROR (Status)) {
+      Status = PcdSet32S (PcdEnableGpio, PcdGet32 (PcdEnableGpio));
+      ASSERT_EFI_ERROR (Status);
+    }
+
   } else {
     /*
      * Disable PCIe and XHCI
      */
     Status = PcdSet32S (PcdXhciPci, 0);
+    ASSERT_EFI_ERROR (Status);
+    /*
+     * Enable GPIO
+     */
+    Status = PcdSet32S (PcdEnableGpio, 1);
     ASSERT_EFI_ERROR (Status);
   }
 
@@ -842,7 +857,7 @@ STATIC CONST NAMESPACE_TABLES SdtTables[] = {
 #endif
   {
     SIGNATURE_64 ('R', 'P', 'I', '3', 'G', 'P', 'I', 'O'),
-    0,
+    PcdToken (PcdEnableGpio),
     0,
     NULL
   },
