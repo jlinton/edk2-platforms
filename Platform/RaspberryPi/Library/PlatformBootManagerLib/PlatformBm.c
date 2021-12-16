@@ -555,8 +555,10 @@ PlatformBootManagerBeforeConsole (
     Status = ProcessCapsules ();
     DEBUG ((DEBUG_INFO, "ProcessCapsules returned %r\n", Status));
   } else {
+    DEBUG ((DEBUG_INFO, "Find Esrt\n"));
     Status = gBS->LocateProtocol (&gEsrtManagementProtocolGuid, NULL, (VOID**)&EsrtManagement);
     if (!EFI_ERROR (Status)) {
+	  DEBUG ((DEBUG_INFO, "Found, sync Esrt\n"));
       EsrtManagement->SyncEsrtFmp ();
     }
   }
@@ -729,8 +731,10 @@ PlatformBootManagerAfterConsole (
     DEBUG ((DEBUG_INFO, "Error applying Boot Discovery Policy:%r\n", Status));
   }
 
+  DEBUG ((DEBUG_INFO, "Find Esrt\n"));
   Status = gBS->LocateProtocol (&gEsrtManagementProtocolGuid, NULL, (VOID**)&EsrtManagement);
   if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Found sync Esrt\n"));
     EsrtManagement->SyncEsrtFmp ();
   }
 
