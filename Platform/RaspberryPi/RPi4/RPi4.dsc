@@ -306,7 +306,7 @@
 !if $(TARGET) == RELEASE
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x21
 !else
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2f
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x27
 !endif
 
   #  DEBUG_INIT      0x00000001  // Initialization
