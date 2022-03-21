@@ -751,6 +751,13 @@
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
   #
+  # ATA and AHCI (for CM4)
+  #
+  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
+  MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
+  MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+
+  #
   # USB Support
   #
   MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
