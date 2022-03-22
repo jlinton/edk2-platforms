@@ -76,6 +76,8 @@ SerialPortInitialize (
   EFI_PARITY_TYPE     Parity;
   UINT8               DataBits;
   EFI_STOP_BITS_TYPE  StopBits;
+  RETURN_STATUS       Ret;
+  UINTN               Timeout;
 
   //
   // First thing we need to do is determine which of PL011 or miniUART is selected
@@ -85,23 +87,34 @@ SerialPortInitialize (
     UsePl011UartSet = TRUE;
   }
 
-  if (UsePl011Uart) {
-    BaudRate = FixedPcdGet64 (PcdUartDefaultBaudRate);
+  // always init the pl011 on the RPi4, linux expects a SBSA uart to be at 115200
+  // this means we need to set the baud/etc even if we aren't using it as a console
+  if ((UsePl011Uart) || (RPI_MODEL == 4)) {
     ReceiveFifoDepth = 0;         // Use default FIFO depth
+    if (!UsePl011Uart)
+    {
+      BaudRate = 115200;
+    }
+    else
+    {
+      BaudRate = FixedPcdGet64 (PcdUartDefaultBaudRate);
+    }
     Parity = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);
     DataBits = FixedPcdGet8 (PcdUartDefaultDataBits);
     StopBits = (EFI_STOP_BITS_TYPE) FixedPcdGet8 (PcdUartDefaultStopBits);
 
-    return PL011UartInitializePort (
-             PL011_UART_REGISTER_BASE,
-             PL011UartClockGetFreq(),
-             &BaudRate,
-             &ReceiveFifoDepth,
-             &Parity,
-             &DataBits,
-             &StopBits
-             );
-  } else {
+    Ret = PL011UartInitializePort (
+           PL011_UART_REGISTER_BASE,
+           PL011UartClockGetFreq(),
+           &BaudRate,
+           &ReceiveFifoDepth,
+           &Parity,
+           &DataBits,
+           &StopBits
+           );
+  }
+
+  if (!UsePl011Uart) {
     SerialRegisterBase = MINI_UART_REGISTER_BASE;
     Divisor = SerialPortGetDivisor (PcdGet32 (PcdSerialBaudRate));
 
@@ -127,7 +140,8 @@ SerialPortInitialize (
     // Wait for the serial port to be ready.
     // Verify that both the transmit FIFO and the shift register are empty.
     //
-    while ((SerialPortReadRegister (SerialRegisterBase, R_UART_LSR) & (B_UART_LSR_TEMT | B_UART_LSR_TXRDY)) != (B_UART_LSR_TEMT | B_UART_LSR_TXRDY));
+    Timeout = 1000;
+    while (((SerialPortReadRegister (SerialRegisterBase, R_UART_LSR) & (B_UART_LSR_TEMT | B_UART_LSR_TXRDY)) != (B_UART_LSR_TEMT | B_UART_LSR_TXRDY)) && (Timeout--));
 
     //
     // Configure baud rate
@@ -158,9 +172,9 @@ SerialPortInitialize (
     // Put Modem Control Register(MCR) into its reset state of 0x00.
     //
     SerialPortWriteRegister (SerialRegisterBase, R_UART_MCR, 0x00);
-
-    return RETURN_SUCCESS;
+    Ret = RETURN_SUCCESS;
   }
+  return Ret;
 }
 
 /**
