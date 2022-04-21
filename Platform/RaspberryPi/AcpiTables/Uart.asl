@@ -107,10 +107,26 @@ Device(BTH0)
   //
   Name (URIU, 0x2)
 
+  Name (BTON, 0xf)
+
   Method (_STA)
   {
-    Return (0xf)
+    Return (BTON)
   }
+
+  
+  // Don't need a PowerResource here because we don't need
+  // to share the power state between multiple devices
+  Method (_PS0, 0, Serialized) // aka _ON
+  {
+	// trap to EL3 to flip this on
+  }
+
+  Method (_PS3, 0, Serialized) // aka _OFF
+  {
+	// trap to EL3 to flip this off
+  }
+
 
   //
   // Resource for URT0 (PL011)
