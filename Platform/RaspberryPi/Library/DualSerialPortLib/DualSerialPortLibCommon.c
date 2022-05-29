@@ -110,6 +110,42 @@ SerialPortWritable (
   return TRUE;
 }
 
+UINTN
+EFIAPI
+PLWrite(  IN UINT8   *Buffer,
+  IN UINTN   NumberOfBytes
+)
+{
+	return PL011UartWrite (PL011_UART_REGISTER_BASE, Buffer, NumberOfBytes);
+}
+
+volatile int cntr = 0;
+
+static void xdelay(void)
+{
+	for (int x=0;x<100000;x++)
+	{
+		cntr++;
+	}
+}
+
+UINTN
+EFIAPI
+PLRead(  IN UINT8   *Buffer,
+  IN UINTN   NumberOfBytes
+)
+{
+	int cnt=0;
+	xdelay();
+	while (PL011UartPoll (PL011_UART_REGISTER_BASE) && (cnt<NumberOfBytes))
+	{
+		PL011UartRead (PL011_UART_REGISTER_BASE, &Buffer[cnt], 1);
+		cnt++;
+		xdelay();
+	}
+    return cnt;
+}
+
 /**
   Write data from buffer to serial device.
 

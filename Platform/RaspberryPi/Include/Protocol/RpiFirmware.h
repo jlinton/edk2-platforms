@@ -168,7 +168,8 @@ EFI_STATUS
 (EFIAPI *GPIO_SET_CFG) (
   UINTN Gpio,
   UINTN Direction,
-  UINTN State
+  UINTN State,
+  UINTN State2
   );
 
 typedef
