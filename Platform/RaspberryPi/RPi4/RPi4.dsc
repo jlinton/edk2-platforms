@@ -696,7 +696,10 @@
   ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   Platform/RaspberryPi/Drivers/RpiFirmwareDxe/RpiFirmwareDxe.inf
   Platform/RaspberryPi/Drivers/FdtDxe/FdtDxe.inf
-  Platform/RaspberryPi/Drivers/ConfigDxe/ConfigDxe.inf
+  Platform/RaspberryPi/Drivers/ConfigDxe/ConfigDxe.inf {
+    <LibraryClasses>
+      SerialPortLib|Platform/RaspberryPi/Library/DualSerialPortLib/DualSerialPortDxeLib.inf
+  }
   ArmPkg/Drivers/TimerDxe/TimerDxe.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   MdeModulePkg/Universal/EbcDxe/EbcDxe.inf
