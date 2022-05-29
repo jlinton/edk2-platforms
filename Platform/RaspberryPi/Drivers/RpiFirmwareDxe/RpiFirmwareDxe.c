@@ -1478,7 +1478,8 @@ EFIAPI
 RpiFirmwareNotifyGpioSetCfg (
   IN UINTN Gpio,
   IN UINTN Direction,
-  IN UINTN State
+  IN UINTN State,
+  IN UINTN State2
   )
 {
   RPI_FW_NOTIFY_GPIO_SET_CFG_CMD *Cmd;
@@ -1526,7 +1527,7 @@ RpiFirmwareNotifyGpioSetCfg (
 
   ReleaseSpinLock (&mMailboxLock);
 
-  RpiFirmwareSetGpio (Gpio,!State);
+  RpiFirmwareSetGpio (Gpio,State2);
 
 
   return Status;

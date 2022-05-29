@@ -450,6 +450,12 @@ SetupVariables (
   return EFI_SUCCESS;
 }
 
+//RETURN_STATUS EFIAPI SerialPortInitialize (  VOID  );
+RETURN_STATUS EFIAPI  MiniUartInitialize ( VOID );
+UINTN EFIAPI PLWrite(IN UINT8 *Buffer, IN UINTN NumberOfBytes);
+UINTN EFIAPI PLRead(IN UINT8 *Buffer, IN UINTN  NumberOfBytes);
+
+
 
 STATIC VOID
 ApplyVariables (
@@ -647,7 +653,7 @@ ApplyVariables (
       Status = mFwProtocol->SetPowerState (RPI_MBOX_POWER_STATE_SDHCI,
                                            TRUE, TRUE); //SD on with wait
       Status = mFwProtocol->SetGpioConfig (RPI_EXP_GPIO_SD_VOLT,
-                                           RPI_EXP_GPIO_DIR_OUT, TRUE); //3.3v
+                                           RPI_EXP_GPIO_DIR_OUT, TRUE, FALSE); //3.3v
       Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_EMMC2, TRUE);
       Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_EMMC, TRUE);
     }
@@ -687,6 +693,48 @@ ApplyVariables (
     GpioPinFuncSet (FanOnGpio, GPIO_FSEL_OUTPUT);
   }
 
+
+  {
+	  UINT32                            ClockRate;
+	  mFwProtocol->GetClockRate (RPI_MBOX_CLOCK_RATE_CORE, &ClockRate);
+	  DEBUG ((DEBUG_INFO, "Core clock rate is %d\n", ClockRate ));
+	  mFwProtocol->GetClockRate (RPI_MBOX_CLOCK_RATE_UART, &ClockRate);
+	  DEBUG ((DEBUG_INFO, "uart clock rate is %d\n", ClockRate ));
+  }
+  //
+  // Bluetooth pin muxing
+  //
+  if ((PcdGet32 (PcdUartInUse) == PL011_UART_IN_USE)) {
+    DEBUG ((DEBUG_INFO, "Enable Bluetooth over MiniUART\n"));
+    GpioPinFuncSet (32, GPIO_FSEL_ALT5);
+    GpioPinFuncSet (33, GPIO_FSEL_ALT5);
+
+//	Status = mFwProtocol->SetPowerState (RPI_MBOX_POWER_STATE_UART0, TRUE, FALSE); 
+//	Status = mFwProtocol->SetPowerState (RPI_MBOX_POWER_STATE_UART1, TRUE, FALSE);
+	DEBUG ((DEBUG_INFO, "Miniuart returned %d\n", MiniUartInitialize ())); 
+
+  } else {
+    DEBUG ((DEBUG_INFO, "Enable Bluetooth over PL011 UART\n"));
+    GpioPinFuncSet (32, GPIO_FSEL_ALT3);
+    GpioPinFuncSet (33, GPIO_FSEL_ALT3);
+
+//	char buf[]= {0x01, 0x03, 0x0c, 0x00 };
+	// reset!
+//	PL011UartWrite (PL011_UART_REGISTER_BASE, buf, 4);
+
+  }
+
+  // try to reset the BT
+
+  mFwProtocol->SetGpioConfig (RPI_EXP_GPIO_BT, RPI_EXP_GPIO_DIR_OUT, FALSE, FALSE);
+  GpioPinFuncSet (31, GPIO_FSEL_OUTPUT);
+  GpioPinConfigure (31, SET_GPIO);
+  gBS->Stall (5000);
+
+
+  // assure the BT is powered
+  mFwProtocol->SetGpioConfig (RPI_EXP_GPIO_BT, RPI_EXP_GPIO_DIR_OUT, TRUE, TRUE);
+  gBS->Stall (100);
   //
   // Fake the CTS signal as we don't support HW flow control yet.
   // Pin 31 must be held LOW so that we can talk to the BT chip
@@ -695,17 +743,37 @@ ApplyVariables (
   GpioPinFuncSet (31, GPIO_FSEL_OUTPUT);
   GpioPinConfigure (31, CLEAR_GPIO);
 
-  //
-  // Bluetooth pin muxing
-  //
-  if ((PcdGet32 (PcdUartInUse) == PL011_UART_IN_USE)) {
-    DEBUG ((DEBUG_INFO, "Enable Bluetooth over MiniUART\n"));
-    GpioPinFuncSet (32, GPIO_FSEL_ALT5);
-    GpioPinFuncSet (33, GPIO_FSEL_ALT5);
-  } else {
-    DEBUG ((DEBUG_INFO, "Enable Bluetooth over PL011 UART\n"));
-    GpioPinFuncSet (32, GPIO_FSEL_ALT3);
-    GpioPinFuncSet (33, GPIO_FSEL_ALT3);
+
+
+  for (int x=0;x<100;x++)
+  {
+	  UINT8 buf[40]= {0x01, 0x03, 0x0c, 0x00 }; //HCI_OP_RESET
+	  int ret;
+	  DEBUG ((DEBUG_INFO, "Reset BT %d\n", PLWrite(buf, 4)));
+	  ret = PLRead(buf, 40);
+	  DEBUG ((DEBUG_INFO, "read BT %d: \n", ret));
+	  for (int y=0;y<ret;y++)
+	  {
+		  DEBUG ((DEBUG_INFO, " %X", buf[y]));
+	  }
+	  DEBUG ((DEBUG_INFO, "\n"));
+  }
+  // SW reset
+  for (int x=0;x<100;x++)
+  {
+//  UINT8 rbuf[10]= {0x01, 0x03, 0x0c, 0x00 }; //HCI_OP_RESET
+	  UINT8 buf[40]= {0x01, 0x01, 0x10, 0x00 }; //HCI_OP_READ_LOCAL_VERSION	
+	int ret;
+	DEBUG ((DEBUG_INFO, "ID BT %d\n", PLWrite(buf, 4)));
+	ret = PLRead(buf, 40);
+	DEBUG ((DEBUG_INFO, "read BT %d: \n", ret));
+	for (int y=0;y<ret;y++)
+	{
+		DEBUG ((DEBUG_INFO, " %X", buf[y]));
+	}
+	DEBUG ((DEBUG_INFO, "\n"));
+//	UINT8 buf[]= {0x01, 0x03, 0x0c, 0x00 };
+    // gets back 4 e
   }
 
 }

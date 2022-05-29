@@ -50,22 +50,11 @@ SerialPortGetDivisor (
   return Divisor;
 }
 
-/**
-  Initialize the serial device hardware.
-
-  If no initialization is required, then return RETURN_SUCCESS.
-  If the serial device was successfully initialized, then return RETURN_SUCCESS.
-  If the serial device could not be initialized, then return RETURN_DEVICE_ERROR.
-
-  @retval RETURN_SUCCESS        The serial device was initialized.
-  @retval RETURN_DEVICE_ERROR   The serial device could not be initialized.
-
-**/
 RETURN_STATUS
 EFIAPI
-SerialPortInitialize (
-  VOID
-  )
+MiniUartInitialize (
+	VOID
+)
 {
   UINTN               SerialRegisterBase;
   UINT32              Divisor;
@@ -79,33 +68,14 @@ SerialPortInitialize (
   RETURN_STATUS       Ret;
   UINTN               Timeout;
 
-  //
-  // First thing we need to do is determine which of PL011 or miniUART is selected
-  //
-  if (!UsePl011UartSet) {
-    UsePl011Uart = ((MmioRead32(GPIO_BASE_ADDRESS + 4) & 0x0003F000) == 0x00024000);
-    UsePl011UartSet = TRUE;
-  }
-
-  // always init the pl011, linux expects a SBSA uart to be at 115200, so this could be wrong
-  // if the baud/etc is reset
   ReceiveFifoDepth = 0;         // Use default FIFO depth
   BaudRate = FixedPcdGet64 (PcdUartDefaultBaudRate);
   Parity = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);
   DataBits = FixedPcdGet8 (PcdUartDefaultDataBits);
   StopBits = (EFI_STOP_BITS_TYPE) FixedPcdGet8 (PcdUartDefaultStopBits);
 
-  Ret = PL011UartInitializePort (
-           PL011_UART_REGISTER_BASE,
-           PL011UartClockGetFreq(),
-           &BaudRate,
-           &ReceiveFifoDepth,
-           &Parity,
-           &DataBits,
-           &StopBits
-           );
+  Ret = 0;
 
-  if (!UsePl011Uart) {
     SerialRegisterBase = MINI_UART_REGISTER_BASE;
     Divisor = SerialPortGetDivisor (PcdGet32 (PcdSerialBaudRate));
 
@@ -124,16 +94,21 @@ SerialPortInitialize (
       Initialized = FALSE;
     }
     if (Initialized) {
-      return RETURN_SUCCESS;
+//      return RETURN_SUCCESS;
+//		DEBUG ((DEBUG_INFO, "Already inited\n")); //this debug only works when the miniuart isn't the debug console
+      return 1;
     }
 
     //
     // Wait for the serial port to be ready.
     // Verify that both the transmit FIFO and the shift register are empty.
     //
-    Timeout = 1000;
+    Timeout = 1000000;
     while (((SerialPortReadRegister (SerialRegisterBase, R_UART_LSR) & (B_UART_LSR_TEMT | B_UART_LSR_TXRDY)) != (B_UART_LSR_TEMT | B_UART_LSR_TXRDY)) && (Timeout--));
-
+	
+    if (Timeout==0)
+		Ret = 2;
+//	DEBUG ((DEBUG_INFO, "Timeout is %d\n", Timeout)); //this debug only works when the miniuart isn't the debug console
     //
     // Configure baud rate
     //
@@ -163,9 +138,63 @@ SerialPortInitialize (
     // Put Modem Control Register(MCR) into its reset state of 0x00.
     //
     SerialPortWriteRegister (SerialRegisterBase, R_UART_MCR, 0x00);
-	Ret = RETURN_SUCCESS;
+//	Ret = RETURN_SUCCESS;
+	return Ret;
+}
+
+/**
+  Initialize the serial device hardware.
+
+  If no initialization is required, then return RETURN_SUCCESS.
+  If the serial device was successfully initialized, then return RETURN_SUCCESS.
+  If the serial device could not be initialized, then return RETURN_DEVICE_ERROR.
+
+  @retval RETURN_SUCCESS        The serial device was initialized.
+  @retval RETURN_DEVICE_ERROR   The serial device could not be initialized.
+
+**/
+RETURN_STATUS
+EFIAPI
+SerialPortInitialize (
+  VOID
+  )
+{
+  UINT64              BaudRate;
+  UINT32              ReceiveFifoDepth;
+  EFI_PARITY_TYPE     Parity;
+  UINT8               DataBits;
+  EFI_STOP_BITS_TYPE  StopBits;
+
+  //
+  // First thing we need to do is determine which of PL011 or miniUART is selected
+  //
+  if (!UsePl011UartSet) {
+    UsePl011Uart = ((MmioRead32(GPIO_BASE_ADDRESS + 4) & 0x0003F000) == 0x00024000);
+    UsePl011UartSet = TRUE;
   }
-  return Ret;
+
+  // always init the pl011, linux expects a SBSA uart to be at 115200, so this could be wrong
+  // if the baud/etc is reset
+  ReceiveFifoDepth = 0;         // Use default FIFO depth
+  BaudRate = FixedPcdGet64 (PcdUartDefaultBaudRate);
+  Parity = (EFI_PARITY_TYPE)FixedPcdGet8 (PcdUartDefaultParity);
+  DataBits = FixedPcdGet8 (PcdUartDefaultDataBits);
+  StopBits = (EFI_STOP_BITS_TYPE) FixedPcdGet8 (PcdUartDefaultStopBits);
+
+  PL011UartInitializePort (
+           PL011_UART_REGISTER_BASE,
+           PL011UartClockGetFreq(),
+           &BaudRate,
+           &ReceiveFifoDepth,
+           &Parity,
+           &DataBits,
+           &StopBits
+           );
+
+  if (!UsePl011Uart) {
+	  MiniUartInitialize ();
+  }
+  return RETURN_SUCCESS;
 }
 
 /**
