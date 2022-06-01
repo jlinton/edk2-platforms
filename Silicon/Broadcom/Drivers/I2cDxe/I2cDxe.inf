@@ -1,0 +1,56 @@
+#  @file
+#
+#  Component description file for I2c driver
+#
+#  Copyright (c) 2015, Freescale Semiconductor, Inc. All rights reserved.
+#  Copyright 2017-2020 NXP
+#  Sourced and reworked from edk2/NXP I2C stack
+#  Copyright 2022 Arm, Jeremy Linton
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+
+[Defines]
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = I2cDxe
+  FILE_GUID                      = 09e767d9-9c1e-405d-86c3-fb7ce355f948
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = I2cDxeEntryPoint
+  UNLOAD                         = I2cDxeUnload
+
+[Sources.common]
+  ComponentName.c
+  DriverBinding.c
+  I2cDxe.c
+
+[LibraryClasses]
+  ArmLib
+  BaseMemoryLib
+  DevicePathLib
+  IoLib
+  MemoryAllocationLib
+  PcdLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+  UefiRuntimeLib
+
+[Guids]
+  gBcmNonDiscoverableI2cMasterGuid
+  gEfiEventVirtualAddressChangeGuid
+
+[Packages]
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  Platform/RaspberryPi/RaspberryPi.dec
+  Silicon/Broadcom/Bcm283x/Bcm283x.dec
+
+[Protocols]
+  gEdkiiNonDiscoverableDeviceProtocolGuid    ## TO_START
+  gEfiI2cMasterProtocolGuid                  ## BY_START
+
+[Depex]
+  TRUE

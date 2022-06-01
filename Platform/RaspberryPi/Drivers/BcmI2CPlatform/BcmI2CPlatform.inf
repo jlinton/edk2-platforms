@@ -1,0 +1,54 @@
+## @file
+#
+#  Component description file for Bcm/Rpi I2C driver.
+#
+#  Copyright 2018-2020 NXP
+#  Sourced and reworked from edk2/NXP I2C stack
+#  Copyright 2022 Arm, Jeremy Linton
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001A
+  BASE_NAME                      = BcmI2CPlatformDxe
+  FILE_GUID                      = 1a23fe23-39bc-4bee-859d-ecb5bbb60484
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = BcmI2CPlatformDxeEntryPoint
+
+[Sources]
+  BcmI2CPlatform.c
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  Silicon/Maxim/Library/Ds1307RtcLib/Ds1307RtcLib.dec
+  Silicon/Broadcom/Bcm283x/Bcm283x.dec
+  Platform/RaspberryPi/RaspberryPi.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Guids]
+  gBcmNonDiscoverableI2cMasterGuid
+
+[Protocols]
+  gEdkiiNonDiscoverableDeviceProtocolGuid        ## PRODUCES
+  gDs1307RealTimeClockLibI2cMasterProtocolGuid   ## PRODUCES
+
+[Pcd]
+  gBcm283xTokenSpaceGuid.PcdBcm283xRegistersAddress
+  gRaspberryPiTokenSpaceGuid.PcdHwRtc
+
+[Depex]
+  gRaspberryPiConfigAppliedProtocolGuid
