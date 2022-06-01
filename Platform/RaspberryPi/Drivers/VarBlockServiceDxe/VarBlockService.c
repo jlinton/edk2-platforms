@@ -1352,6 +1352,18 @@ ValidateFvHeader (
 }
 
 
+extern EFI_EVENT VirtualAddressChangeEvent;
+
+EFI_STATUS
+EFIAPI
+FvbUnload (
+  IN EFI_HANDLE         ImageHandle
+)
+{
+  gBS->CloseEvent (VirtualAddressChangeEvent);
+  return EFI_SUCCESS;
+}
+
 
 
 EFI_STATUS
