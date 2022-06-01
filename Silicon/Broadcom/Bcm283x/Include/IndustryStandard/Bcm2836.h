@@ -97,6 +97,16 @@
 #define BCM2836_I2C2_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_I2C2_OFFSET)
 #define BCM2836_I2C2_LENGTH                                 0x00000020
 
+/* I2C register offsets */
+#define BCM2835_I2C_C                                      0x00
+#define BCM2835_I2C_S                                      0x04
+#define BCM2835_I2C_DLEN                                   0x08
+#define BCM2835_I2C_A                                      0x0c
+#define BCM2835_I2C_FIFO                                   0x10
+#define BCM2835_I2C_DIV                                    0x14
+#define BCM2835_I2C_DEL                                    0x18
+#define BCM2835_I2C_CLKT                                   0x1c
+
 #define BCM2836_SPI0_OFFSET                                 0x00204000
 #define BCM2836_SPI0_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_SPI0_OFFSET)
 #define BCM2836_SPI0_LENGTH                                 0x00000020
