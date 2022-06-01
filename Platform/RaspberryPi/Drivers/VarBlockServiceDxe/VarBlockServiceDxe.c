@@ -116,6 +116,7 @@ FvbVirtualAddressChangeEvent (
   GpioSetupRuntime ();
 }
 
+EFI_EVENT VirtualAddressChangeEvent;
 
 VOID
 InstallVirtualAddressChangeHandler (
@@ -123,7 +124,6 @@ InstallVirtualAddressChangeHandler (
   )
 {
   EFI_STATUS Status;
-  EFI_EVENT VirtualAddressChangeEvent;
 
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
