@@ -28,6 +28,9 @@
   UefiBootServicesTableLib
   UefiLib
 
+[Guids]
+  gEfiEventVirtualAddressChangeGuid
+
 [Protocols]
   gEfiI2cMasterProtocolGuid                          ## CONSUMES
   gDs1307RealTimeClockLibI2cMasterProtocolGuid       ## CONSUMES
@@ -36,5 +39,7 @@
   gDs1307RtcLibTokenSpaceGuid.PcdI2cSlaveAddress
   gDs1307RtcLibTokenSpaceGuid.PcdI2cBusFrequency
 
+# 2.15 EDK II INF, .. the generic (i.e depex).. are not permitted
+# yet it ANDs this into the parent's depex
 [Depex]
-  gDs1307RealTimeClockLibI2cMasterProtocolGuid
+  gDs1307RealTimeClockLibI2cMasterProtocolGuid AND gEfiI2cMasterProtocolGuid

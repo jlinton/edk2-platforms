@@ -18,13 +18,39 @@
 #include <Library/RealTimeClockLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
+#include <Library/UefiRuntimeLib.h>
 #include <Protocol/I2cMaster.h>
 
 #include "Ds1307Rtc.h"
 
 STATIC VOID                       *mDriverEventRegistration;
 STATIC EFI_HANDLE                 mI2cMasterHandle;
+STATIC EFI_EVENT                  mRtcVirtualAddrChangeEvent;
 STATIC EFI_I2C_MASTER_PROTOCOL    *mI2cMaster;
+
+
+/**
+  Fixup internal data so that EFI can be call in virtual mode.
+  Call the passed in Child Notify event and convert any pointers in
+  lib to virtual mode.
+
+  @param[in]    Event   The Event that is being processed
+  @param[in]    Context Event Context
+**/
+VOID
+EFIAPI
+LibRtcVirtualNotifyEvent (
+  IN EFI_EVENT        Event,
+  IN VOID             *Context
+  )
+{
+  EfiConvertPointer (0x0, (VOID **)&mI2cMaster->SetBusFrequency);
+  EfiConvertPointer (0x0, (VOID **)&mI2cMaster->Reset);
+  EfiConvertPointer (0x0, (VOID **)&mI2cMaster->StartRequest);
+  EfiConvertPointer (0x0, (VOID **)&mI2cMaster->I2cControllerCapabilities);
+  EfiConvertPointer (0x0, (VOID **)&mI2cMaster);
+}
+
 
 /**
   Read RTC register.
@@ -54,7 +80,7 @@ RtcRead (
 
   Req.OperationCount = 2;
 
-  Req.SetAddressOp.Flags = 0;
+  Req.SetAddressOp.Flags = 0; //I2C_FLAG_WRITE
   Req.SetAddressOp.LengthInBytes = sizeof (RtcRegAddr);
   Req.SetAddressOp.Buffer = &RtcRegAddr;
 
@@ -98,7 +124,7 @@ RtcWrite (
   Buffer[0] = RtcRegAddr;
   Buffer[1] = Val;
 
-  Req.SetAddressOp.Flags = 0;
+  Req.SetAddressOp.Flags = 0; //I2C_FLAG_WRITE
   Req.SetAddressOp.LengthInBytes = sizeof (Buffer);
   Req.SetAddressOp.Buffer = Buffer;
 
@@ -176,6 +202,8 @@ LibGetTime (
   Time->Year = BcdToDecimal8 (Year) +
                (BcdToDecimal8 (Year) >= 70 ? START_YEAR - 70 : END_YEAR -70);
 
+//  DEBUG ((DEBUG_ERROR, "RTC read: Y=%d, M=%d, D=%d, H=%d, M=%d, S=%d\n",Time->Year,Time->Month,Time->Day,Time->Hour,Time->Minute,Time->Second));
+
   return Status;
 }
 
@@ -202,6 +230,8 @@ LibSetTime (
     DEBUG ((DEBUG_ERROR, "WARNING: Year should be between 1970 and 2069!\n"));
     return EFI_INVALID_PARAMETER;
   }
+
+//  DEBUG ((DEBUG_ERROR, "RTC set: Y=%d, M=%d, D=%d, H=%d, M=%d, S=%d\n",Time->Year,Time->Month,Time->Day,Time->Hour,Time->Minute,Time->Second));
 
   RtcWrite (DS1307_YR_REG_ADDR, DecimalToBcd8 (Time->Year % 100));
   RtcWrite (DS1307_MON_REG_ADDR, DecimalToBcd8 (Time->Month));
@@ -374,6 +404,12 @@ LibRtcInitialize (
     I2cDriverRegistrationEvent,
     NULL,
     &mDriverEventRegistration);
+
+  Status = gBS->CreateEventEx (EVT_NOTIFY_SIGNAL, TPL_NOTIFY,
+                  LibRtcVirtualNotifyEvent, NULL,
+                  &gEfiEventVirtualAddressChangeGuid,
+                  &mRtcVirtualAddrChangeEvent);
+  ASSERT_EFI_ERROR (Status);
 
   return EFI_SUCCESS;
 }
