@@ -511,6 +511,7 @@ ApplyVariables (
   }
 
   if (mModelFamily == 4) {
+    // add memoryspaces for the runtime flash/variable store
     Status = gDS->AddMemorySpace (EfiGcdMemoryTypeMemoryMappedIo, BCM2836_SPI0_BASE_ADDRESS,
                                   SIZE_4KB, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
     ASSERT_EFI_ERROR (Status);
@@ -521,6 +522,13 @@ ApplyVariables (
                                   SIZE_4KB, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
     ASSERT_EFI_ERROR (Status);
     Status = gDS->SetMemorySpaceAttributes (GPIO_BASE_ADDRESS,
+                                            SIZE_4KB, EFI_MEMORY_UC|EFI_MEMORY_RUNTIME);
+
+    // add memoryspace for the runtime rtc/i2c
+    Status = gDS->AddMemorySpace (EfiGcdMemoryTypeMemoryMappedIo, BCM2836_I2C1_BASE_ADDRESS,
+                                  SIZE_4KB, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR (Status);
+    Status = gDS->SetMemorySpaceAttributes (BCM2836_I2C1_BASE_ADDRESS,
                                             SIZE_4KB, EFI_MEMORY_UC|EFI_MEMORY_RUNTIME);
 
     ASSERT_EFI_ERROR (Status);
