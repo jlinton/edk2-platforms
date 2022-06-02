@@ -202,6 +202,8 @@ LibGetTime (
   Time->Year = BcdToDecimal8 (Year) +
                (BcdToDecimal8 (Year) >= 70 ? START_YEAR - 70 : END_YEAR -70);
 
+//  DEBUG ((DEBUG_ERROR, "RTC read: Y=%d, M=%d, D=%d, H=%d, M=%d, S=%d\n",Time->Year,Time->Month,Time->Day,Time->Hour,Time->Minute,Time->Second));
+
   return Status;
 }
 
@@ -228,6 +230,8 @@ LibSetTime (
     DEBUG ((DEBUG_ERROR, "WARNING: Year should be between 1970 and 2069!\n"));
     return EFI_INVALID_PARAMETER;
   }
+
+//  DEBUG ((DEBUG_ERROR, "RTC set: Y=%d, M=%d, D=%d, H=%d, M=%d, S=%d\n",Time->Year,Time->Month,Time->Day,Time->Hour,Time->Minute,Time->Second));
 
   RtcWrite (DS1307_YR_REG_ADDR, DecimalToBcd8 (Time->Year % 100));
   RtcWrite (DS1307_MON_REG_ADDR, DecimalToBcd8 (Time->Month));
@@ -375,6 +379,7 @@ LibRtcInitialize (
   EFI_STATUS          Status;
   UINTN               BufferSize;
 
+  DEBUG ((DEBUG_ERROR, "Ds1307Rtc init\n"));
   //
   // Find the handle that marks the controller
   // that will provide the I2C master protocol.
