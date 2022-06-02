@@ -71,6 +71,11 @@ formset
       name  = EnableGpio,
       guid  = CONFIGDXE_FORM_SET_GUID;
 
+    efivarstore ADVANCED_ENABLEHWRTC_VARSTORE_DATA,
+      attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+      name  = HwRtc,
+      guid  = CONFIGDXE_FORM_SET_GUID;
+
     efivarstore SYSTEM_TABLE_MODE_VARSTORE_DATA,
       attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
       name  = SystemTableMode,
@@ -259,6 +264,17 @@ formset
             option text = STRING_TOKEN(STR_ADVANCED_ENABLEGPIO_ENABLE), value = 1, flags = 0;
           endoneof;
         endif;
+
+        grayoutif ideqval SystemTableMode.Mode == SYSTEM_TABLE_MODE_DT;
+          oneof varid = HwRtc.Value,
+              prompt      = STRING_TOKEN(STR_ADVANCED_ENABLEHWRTC_PROMPT),
+              help        = STRING_TOKEN(STR_ADVANCED_ENABLEHWRTC_HELP),
+              flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+              option text = STRING_TOKEN(STR_ADVANCED_ENABLEHWRTC_DISABLE), value = 0, flags = DEFAULT;
+              option text = STRING_TOKEN(STR_ADVANCED_ENABLEHWRTC_ENABLE), value = 1, flags = 0;
+          endoneof;
+        endif;
+
 #endif
         string varid = AssetTag.AssetTag,
             prompt  = STRING_TOKEN(STR_ADVANCED_ASSET_TAG_PROMPT),

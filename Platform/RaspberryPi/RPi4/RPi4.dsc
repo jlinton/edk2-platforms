@@ -368,6 +368,12 @@
   # Default platform supported RFC 4646 languages: (American) English
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLangCodes|"en-US"
 
+  #
+  # RTC Pcds
+  #
+  gDs1307RtcLibTokenSpaceGuid.PcdI2cSlaveAddress|0x68
+  gDs1307RtcLibTokenSpaceGuid.PcdI2cBusFrequency|100000
+
 [LibraryClasses.common]
   ArmLib|ArmPkg/Library/ArmLib/ArmBaseLib.inf
   ArmMmuLib|ArmPkg/Library/ArmMmuLib/ArmMmuBaseLib.inf
@@ -562,6 +568,14 @@
   #
   gRaspberryPiTokenSpaceGuid.PcdEnableGpio|L"EnableGpio"|gConfigDxeFormSetGuid|0x0|0
 
+  # Utilize RTC on I2C1
+  #
+  # 0  - No
+  # 1  - Yes
+  #
+  gRaspberryPiTokenSpaceGuid.PcdHwRtc|L"HwRtc"|gConfigDxeFormSetGuid|0x0|0
+
+
   #
   # Common UEFI ones.
   #
@@ -658,6 +672,15 @@
   EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf {
     <LibraryClasses>
       RealTimeClockLib|EmbeddedPkg/Library/VirtualRealTimeClockLib/VirtualRealTimeClockLib.inf
+  }
+  # Oh, confusing, we now have two runtime variable support drivers...
+  # Do the virtual one by default, but if the hardware RTC is configured then
+  # SOM the BcmI2CPlatform driver, which activates this one.
+  EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf {
+    <Defines>
+       FILE_GUID = 9d539f19-5fb6-4088-a81d-aaeb90446751
+    <LibraryClasses>
+     RealTimeClockLib|Silicon/Maxim/Library/Ds1307RtcLib/Ds1307RtcLib.inf
   }
   EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
 
@@ -782,6 +805,13 @@
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
   #
+  # RTC support
+  #
+  Platform/RaspberryPi/Drivers/BcmI2CPlatform/BcmI2CPlatform.inf
+  Silicon/Maxim/Library/Ds1307RtcLib/Ds1307RtcLib.inf
+  Silicon/Broadcom/Drivers/I2cDxe/I2cDxe.inf
+
+
   # UEFI application (Shell Embedded Boot Loader)
   #
   ShellPkg/Application/Shell/Shell.inf {
