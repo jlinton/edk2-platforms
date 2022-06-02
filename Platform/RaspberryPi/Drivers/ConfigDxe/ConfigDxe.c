@@ -319,6 +319,16 @@ SetupVariables (
       ASSERT_EFI_ERROR (Status);
     }
 
+    Size = sizeof (UINT32);
+    Status = gRT->GetVariable (L"HwRtc",
+                               &gConfigDxeFormSetGuid,
+                               NULL, &Size, &Var32);
+    if (EFI_ERROR (Status)) {
+      Status = PcdSet32S (PcdHwRtc, PcdGet32 (PcdHwRtc));
+      ASSERT_EFI_ERROR (Status);
+    }
+
+
   } else {
     /*
      * Disable PCIe and XHCI
@@ -784,6 +794,21 @@ ApplyVariables (
     // gets back 4 e
   }
 */
+
+  // Assure I2C1 is selected on header
+  if (PcdGet32 (PcdHwRtc)) {
+    UINT32                            ClockRate;
+	DEBUG ((DEBUG_INFO, "Enable SDA1\n"));
+	GpioPinFuncSet (2, GPIO_FSEL_ALT0);
+	GpioPinFuncSet (3, GPIO_FSEL_ALT0);
+
+    mFwProtocol->GetClockRate (RPI_MBOX_CLOCK_RATE_CORE, &ClockRate);
+//	ClockRate/=100000; //100Khz is the max for most of these...
+	ClockRate/=50000; //50Khz slow it down a bit initially
+
+	MmioWrite32 (BCM2836_I2C1_OFFSET + BCM2836_SOC_REGISTERS + BCM2835_I2C_DIV, ClockRate ); //was 5dc which assumes a 150Mhz clock, when we are usually at 500Mhz?
+//	Status = mFwProtocol->SetPowerState (RPI_MBOX_POWER_STATE_I2C1, TRUE, FALSE); //I2C1 on with wait
+  }
 
 }
 
