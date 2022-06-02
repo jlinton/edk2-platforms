@@ -73,6 +73,12 @@
 #string STR_ADVANCED_ENABLEGPIO_DISABLE #language en-US "Disabled"
 #string STR_ADVANCED_ENABLEGPIO_ENABLE  #language en-US "Enable"
 
+#string STR_ADVANCED_ENABLEHWRTC_PROMPT  #language en-US "Enable Hardware RTC"
+#string STR_ADVANCED_ENABLEHWRTC_HELP    #language en-US "A DS1307 hardware real time clock is attached on I2C1."
+#string STR_ADVANCED_ENABLEHWRTC_DISABLE #language en-US "Disabled"
+#string STR_ADVANCED_ENABLEHWRTC_ENABLE  #language en-US "Enable"
+
+
 #string STR_ADVANCED_ASSET_TAG_PROMPT #language en-US "Asset Tag"
 #string STR_ADVANCED_ASSET_TAG_HELP   #language en-US "Set the system Asset Tag"
 
