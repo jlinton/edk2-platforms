@@ -744,7 +744,7 @@ ApplyVariables (
   GpioPinConfigure (31, CLEAR_GPIO);
 
 
-
+/*
   for (int x=0;x<100;x++)
   {
 	  UINT8 buf[40]= {0x01, 0x03, 0x0c, 0x00 }; //HCI_OP_RESET
@@ -775,6 +775,7 @@ ApplyVariables (
 //	UINT8 buf[]= {0x01, 0x03, 0x0c, 0x00 };
     // gets back 4 e
   }
+*/
 
 }
 
