@@ -379,6 +379,7 @@ LibRtcInitialize (
   EFI_STATUS          Status;
   UINTN               BufferSize;
 
+  DEBUG ((DEBUG_ERROR, "Ds1307Rtc init\n"));
   //
   // Find the handle that marks the controller
   // that will provide the I2C master protocol.
