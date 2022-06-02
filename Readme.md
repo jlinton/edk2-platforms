@@ -1,3 +1,33 @@
+Hi,
+
+You have found my EDK2/RPI4 dev branch. As I'm mostly interested in ACPI
+on this platform, that is what most of these changes are related to.
+
+This branch adds:
+
+* CPPC controls (CPU frequency/reporting, try cpupower in Linux)
+* POE hat fan support, Variable speed ACPI fans
+* Persistent SPI flash variable store support, only works with bootroms that
+  have 128K available (aka anything before the network recovery option)
+* Fixes a major bug in the variable store.
+* GPIO block, enable/disable option (because we need the pinmux for the
+  variable store)
+* DS1307, Real time clock HAT support on I2C1/GPIO2-3
+* Fixes the problem where the BT (which sorta works) on the miniuart regressed
+* Enable the X86 option rom emulator for the CM4
+* Enables AHCI (SATA) boot on the CM4
+* Add ESRT, and the beginnings of capsule update (note fwupdate output)
+* Adds some ACPI/GPU bindings
+
+There is a DEBUG binary checked in here: as RPI_EFI.fd, it may boot slower,
+fails some SCT test (cause its got DEBUG options that break it), and generally
+require debugging. That said, I only run DEBUG builds and it tends to work
+ok in most cases. Poke me on the rpi-uefi-dev discord channel if you have
+problems. There is an invite in the PFTF documentation, github issues 
+may/may not be noticed.
+
+
+
 This branch holds all platforms actively maintained against the
 [edk2](https://github.com/tianocore/edk2) master branch.
 
