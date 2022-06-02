@@ -300,6 +300,17 @@ READ_LOCK_STATUS   = TRUE
   INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 
   #
+  # I2C/RTC
+  #
+  INF Platform/RaspberryPi/Drivers/BcmI2CPlatform/BcmI2CPlatform.inf
+  INF Silicon/Broadcom/Drivers/I2cDxe/I2cDxe.inf
+  INF RuleOverride = RTC_RUNTIME EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
+#  FILE DRIVER = 9d539f19-5fb6-4088-a81d-aaeb90446751 {
+#    SECTION  PE32 = EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
+#    SECTION  PE32 =  $(INF_OUTPUT)Build/RPi4/DEBUG_GCC5/AARCH64/RealTimeClock_9d539f19-5fb6-4088-a81d-aaeb90446751.efi
+#  }
+
+  #
   # SCSI Bus and Disk Driver
   #
   INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
@@ -482,6 +493,14 @@ FMP_PAYLOAD = FmpPayloadSystemFirmwarePkcs7
     PE32         PE32                   $(INF_OUTPUT)/$(MODULE_NAME).efi
     UI           STRING="$(MODULE_NAME)" Optional
   }
+
+[Rule.Common.DXE_RUNTIME_DRIVER.RTC_RUNTIME]
+  FILE DRIVER = 9d539f19-5fb6-4088-a81d-aaeb90446751 {
+    DXE_DEPEX    DXE_DEPEX              Optional $(INF_OUTPUT)/../../9d539f19-5fb6-4088-a81d-aaeb90446751/OUTPUT/$(MODULE_NAME).depex
+    PE32         PE32                   $(INF_OUTPUT)/../../9d539f19-5fb6-4088-a81d-aaeb90446751/OUTPUT/$(MODULE_NAME).efi
+    UI           STRING="$(MODULE_NAME)" Optional
+  }
+
 
 [Rule.Common.UEFI_APPLICATION]
   FILE APPLICATION = $(NAMED_GUID) {

@@ -540,6 +540,13 @@
   #
   gRaspberryPiTokenSpaceGuid.PcdEnableGpio|L"EnableGpio"|gConfigDxeFormSetGuid|0x0|1
 
+  # Utilize RTC on I2C1
+  #
+  # 0  - No
+  # 1  - Yes
+  #
+  gRaspberryPiTokenSpaceGuid.PcdHwRtc|L"HwRtc"|gConfigDxeFormSetGuid|0x0|0
+
   #
   # Common UEFI ones.
   #
