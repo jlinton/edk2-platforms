@@ -52,6 +52,31 @@
   Store (Length, LE ## Index)                                   \
   Add (MI ## Index, LE ## Index - 1, MA ## Index)
 
+
+// ACPI OSC for Platform-Wide Capability
+#define OSC_CAP_PRAGG_SUPPORT         (1U)
+#define OSC_CAP_OST_SUPPORT           (1U << 1)
+#define OSC_CAP_PR3_SUPPORT           (1U << 2)
+#define OSC_CAP_EJECT_SUPPORT         (1U << 3)
+#define OSC_CAP_APEI_SUPPORT          (1U << 4)
+#define OSC_CAP_CPPC_SUPPORT          (1U << 5)
+#define OSC_CAP_CPPC2_SUPPORT         (1U << 6)
+#define OSC_CAP_PLAT_COORDINATED_LPI  (1U << 7)
+#define OSC_CAP_OS_INITIATED_LPI      (1U << 8)
+#define OSC_CAP_TFP_SUPPORT           (1U << 9)
+#define OSC_CAP_16PSTATE_SUPPORT      (1U << 10)
+#define OSC_CAP_GED_SUPPORT           (1U << 11)
+#define OSC_CAP_CPPC_HIGH_SUPPORT     (1U << 12)
+#define OSC_CAP_IRS_SUPPORT           (1U << 13)
+#define OSC_CAP_FLEX_CPPC_SUPPORT     (1U << 14)
+#define OSC_CAP_GHES_SUPPORT          (1U << 15)
+#define OSC_CAP_CPPC_MULT_SUPPORT     (1U << 16)
+#define OSC_CAP_SRAT_INIT_SUPPORT     (1U << 17)
+#define OSC_CAP_USB4_SUPPORT          (1U << 18)
+#define OSC_CAP_TRUEBAT_SUPPORT       (1U << 19)
+#define OSC_CAP_PCI_GAS_SUPPORT       (1U << 20)
+
+
 DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
 {
   Scope (\_SB_)
@@ -61,6 +86,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
     Method (_OSC, 4, Serialized)  { // _OSC: Operating System Capabilities
       CreateDWordField (Arg3, 0x00, STS0)
       CreateDWordField (Arg3, 0x04, CAP0)
+      Name (OSCS, 0x1)
       STS0 &= ~0x1F
 
       If ((Arg0 == ToUUID ("0811b06e-4a27-44f9-8d60-3cbbc22e7b48"))) { /*  Platform-wide Capabilities */
@@ -68,8 +94,16 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
         If (!(Arg1 == One)) {
           STS0 |= 0x0A    /* Unable to process request + Unkown Revision */
         } Else {
-          CAP0 &= ~0x4020 /* CPPC support + Flexable Address Space for CPPC */
-          STS0 |= 0x10    /* capabilities masked */
+          /* this is bonkers wrong because we are clearing support for these  values */
+          /* CAP0 &= ~0x4020  CPPC support + Flexable Address Space for CPPC */
+
+	  /* should really clear everything we don't support but... new ones */
+	  /* so we should mask everything we don't explicity support get added*/    
+	  OSCS = CAP0;
+/*	  CAP0 &= (OSC_CAP_CPPC_SUPPORT|OSC_CAP_CPPC2_SUPPORT|OSC_CAP_OS_INITIATED_LPI|OSC_CAP_FLEX_CPPC_SUPPORT)*/
+	  If (OSCS != CAP0) {
+             STS0 |= 0x10    /* capabilities masked */
+	  }
         }
 #else
         CAP0 = 0        /* Nothing supported */
@@ -98,7 +132,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
         Return(CPCX)
       }
       Name (_PSD, Package() {  //_PSD: Pstate dependency, all cores, same freq domain
-        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+        Package() {5, 0, 0, 0xFD, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
 #endif
     }
@@ -116,7 +150,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
         Return(CPCX)
       }
       Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
-        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+        Package() {5, 0, 0, 0xFD, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
 #endif
     }
@@ -135,7 +169,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
         Return(CPCX)
       }
       Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
-        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+        Package() {5, 0, 0, 0xFD, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
 #endif
     }
@@ -154,7 +188,7 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
         Return(CPCX)
       }
       Name (_PSD, Package() { //_PSD: Pstate dependency, all cores, same freq domain
-        Package() {5, 0, 0, 0xFE, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
+        Package() {5, 0, 0, 0xFD, 4} // 5 entries, Revision 0, Domain 0, HW_ALL, 4 Procs
       })
 #endif
     }
@@ -350,8 +384,8 @@ DefinitionBlock ("Dsdt.aml", "DSDT", 2, "RPIFDN", "RPI", 2)
     // PERF_CTRL).
     Name(CPCX, Package()
     {
-      21, // Number of entries
-      02, // Revision
+      23, // Number of entries
+      03, // Revision
       //
       // Describe processor capabilities (note Register() is 19.6.115)
       //
