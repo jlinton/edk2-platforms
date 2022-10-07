@@ -407,6 +407,7 @@ SyncPcie (
    * lets convert the DT entry to use the SMC by changing the compatible property
    * and ripping out the root port registers.
    */
+/*
   char *pci_bridge_type = "pci-host-smc-generic";
 
   DEBUG ((DEBUG_INFO, "%a: Switching PCIe to generic SMC\n",  __FUNCTION__));
@@ -424,7 +425,7 @@ SyncPcie (
       __FUNCTION__, Retval));
     return EFI_NOT_FOUND;
   }
-  
+*/
 
   /*
    * Now that we are always running without DMA translation, and with a 3G
@@ -439,7 +440,7 @@ SyncPcie (
    * triggering the mailbox by removing the node.
    */
 
-  Node = fdt_path_offset (mFdtImage, "/scb/pcie@7d500000/pci@1,0");
+  Node = fdt_path_offset (mFdtImage, "/scb/pcie@7d500000/pci@0,0");
   if (Node < 0) {
     // This can happen on CM4/etc which doesn't have an onboard XHCI
     DEBUG ((DEBUG_INFO, "%a: failed to locate /scb/pcie@7d500000/pci@1/usb@1\n", __FUNCTION__));
