@@ -407,6 +407,7 @@ SyncPcie (
    * lets convert the DT entry to use the SMC by changing the compatible property
    * and ripping out the root port registers.
    */
+/*
   char *pci_bridge_type = "pci-host-smc-generic";
 
   DEBUG ((DEBUG_INFO, "%a: Switching PCIe to generic SMC\n",  __FUNCTION__));
@@ -424,7 +425,7 @@ SyncPcie (
       __FUNCTION__, Retval));
     return EFI_NOT_FOUND;
   }
-  
+*/
 
   /*
    * Now that we are always running without DMA translation, and with a 3G
