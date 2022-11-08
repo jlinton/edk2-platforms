@@ -301,7 +301,15 @@
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|1000000
   gEfiMdePkgTokenSpaceGuid.PcdSpinLockTimeout|10000000
   gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue|0xAF
-  gEfiMdePkgTokenSpaceGuid.PcdPerformanceLibraryPropertyMask|1
+  #define PERFORMANCE_LIBRARY_PROPERTY_MEASUREMENT_ENABLED  0x00000001
+  #define PERF_CORE_START_IMAGE  0x0002
+  #define PERF_CORE_LOAD_IMAGE   0x0004
+  #define PERF_CORE_DB_SUPPORT   0x0008
+  #define PERF_CORE_DB_START     0x0010
+  #define PERF_CORE_DB_STOP      0x0020
+  #define PERF_GENERAL_TYPE      0x0040
+#  gEfiMdePkgTokenSpaceGuid.PcdPerformanceLibraryPropertyMask|0x41
+  gEfiMdePkgTokenSpaceGuid.PcdPerformanceLibraryPropertyMask|0x1
   gEfiMdePkgTokenSpaceGuid.PcdPostCodePropertyMask|0
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|320
 
@@ -340,6 +348,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|$(DEBUG_PRINT_ERROR_LEVEL)
 
   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
+  gEfiMdeModulePkgTokenSpaceGuid.PcdExtFpdtBootRecordPadSize|0x20000000
 
   #
   # Optional feature to help prevent EFI memory map fragments
@@ -845,7 +854,6 @@
   Platform/RaspberryPi/Drivers/BcmI2CPlatform/BcmI2CPlatform.inf
   Silicon/Maxim/Library/Ds1307RtcLib/Ds1307RtcLib.inf
   Silicon/Broadcom/Drivers/I2cDxe/I2cDxe.inf
-
 
   #
   # Firmware update
