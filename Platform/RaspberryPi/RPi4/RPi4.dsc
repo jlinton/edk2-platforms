@@ -69,7 +69,8 @@
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
-  ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
+  ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
+
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
@@ -279,13 +280,25 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutUgaSupport|FALSE
   gEfiMdePkgTokenSpaceGuid.PcdUgaConsumeSupport|FALSE
 
+  ## Indicates if S3 performance data will be supported in ACPI FPDT table.
+  #   TRUE  - S3 performance data will be supported in ACPI FPDT table.
+  #   FALSE - S3 performance data will not be supported in ACPI FPDT table.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwarePerformanceDataTableS3Support|FALSE
+
 [PcdsFixedAtBuild.common]
   gEfiMdePkgTokenSpaceGuid.PcdMaximumUnicodeStringLength|1000000
   gEfiMdePkgTokenSpaceGuid.PcdMaximumAsciiStringLength|1000000
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|1000000
   gEfiMdePkgTokenSpaceGuid.PcdSpinLockTimeout|10000000
   gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue|0xAF
-  gEfiMdePkgTokenSpaceGuid.PcdPerformanceLibraryPropertyMask|1
+  #define PERFORMANCE_LIBRARY_PROPERTY_MEASUREMENT_ENABLED  0x00000001
+  #define PERF_CORE_START_IMAGE  0x0002
+  #define PERF_CORE_LOAD_IMAGE   0x0004
+  #define PERF_CORE_DB_SUPPORT   0x0008
+  #define PERF_CORE_DB_START     0x0010
+  #define PERF_CORE_DB_STOP      0x0020
+  #define PERF_GENERAL_TYPE      0x0040
+  gEfiMdePkgTokenSpaceGuid.PcdPerformanceLibraryPropertyMask|0x1
   gEfiMdePkgTokenSpaceGuid.PcdPostCodePropertyMask|0
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|320
 
@@ -324,6 +337,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|$(DEBUG_PRINT_ERROR_LEVEL)
 
   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
+  gEfiMdeModulePkgTokenSpaceGuid.PcdExtFpdtBootRecordPadSize|0x20000000
 
   #
   # Optional feature to help prevent EFI memory map fragments
@@ -812,6 +826,16 @@
   Silicon/Broadcom/Drivers/I2cDxe/I2cDxe.inf
 
 
+  #
+  # Firmware Performance Data Table (FPDT)
+  #
+  MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTableDxe/FirmwarePerformanceDxe.inf {
+    <LibraryClasses>
+      LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
+  }
+
+  #
   # UEFI application (Shell Embedded Boot Loader)
   #
   ShellPkg/Application/Shell/Shell.inf {
