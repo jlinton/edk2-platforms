@@ -344,6 +344,13 @@ READ_LOCK_STATUS   = TRUE
   #
   INF Platform/RaspberryPi/Drivers/LogoDxe/LogoDxe.inf
 
+  #
+  # Firmware Performance Data Table (FPDT)
+  #
+  INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  INF MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTableDxe/FirmwarePerformanceDxe.inf
+
+
 [FV.FVMAIN_COMPACT]
 FvAlignment        = 16
 ERASE_POLARITY     = 1
