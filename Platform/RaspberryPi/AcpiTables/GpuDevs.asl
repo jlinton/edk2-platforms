@@ -37,6 +37,7 @@ Device (USB0)
 }
 
 // Video Core 5 GPU
+// brcm,2711-v3d
 Device (GPU1)
 {
   Name (_HID, "BCMV5000")
@@ -47,6 +48,30 @@ Device (GPU1)
   {
     Return (0xf)
   }
+
+  Device (V3D0)
+  {
+    Name (_HID, "BCMV5004")
+    Name (_CID, "BCMV5004")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfec00000, 0x4000, )
+        MEMORY32FIXED (ReadWrite, 0xfec04000, 0x4000, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 106 }
+      })
+      Return (RBUF)
+    }
+  }
+
   
   Device(HVS0)
   {
@@ -63,7 +88,7 @@ Device (GPU1)
     {
       Name (RBUF, ResourceTemplate ()
       {
-        MEMORY32FIXED (ReadWrite, 0xfe400000, 0x6000, )
+        MEMORY32FIXED (ReadWrite, 0xfe400000, 0x8000, )
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 129 }
       })
       Return (RBUF)
@@ -85,8 +110,20 @@ Device (GPU1)
     {
       Name (RBUF, ResourceTemplate ()
       {
-        MEMORY32FIXED (ReadWrite, 0xfef00700, 0x300, )
-        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 136 }
+        MEMORY32FIXED (ReadWrite, 0xfef00700, 0x300, ) //hdmi
+	MEMORY32FIXED (ReadWrite, 0xfef00300, 0x200, )  //dvp
+	MEMORY32FIXED (ReadWrite, 0xfef00f00, 0x80,  )  //phy
+	MEMORY32FIXED (ReadWrite, 0xfef00f80, 0x80,  )  //rm
+	MEMORY32FIXED (ReadWrite, 0xfef01b00, 0x200, )  //packet
+	MEMORY32FIXED (ReadWrite, 0xfef01f00, 0x400, )  //metadata
+	MEMORY32FIXED (ReadWrite, 0xfef00200, 0x80,  )  //csc
+	MEMORY32FIXED (ReadWrite, 0xfef04300, 0x100, )  //cec
+	MEMORY32FIXED (ReadWrite, 0xfef20000, 0x100, )  //hd
+
+	//        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) {	136 }
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 128 }
+        // sorta bonkers the above should be IRQ 128, which has an interrupt demuxer
+      	// for each of these 8 things. 
       })
       Return (RBUF)
     }
@@ -107,8 +144,16 @@ Device (GPU1)
     {
       Name (RBUF, ResourceTemplate ()
       {
-        MEMORY32FIXED (ReadWrite, 0xfef05700, 0x300, )
-        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 137 }
+        MEMORY32FIXED (ReadWrite, 0xfef05700, 0x300,  )
+	MEMORY32FIXED (ReadWrite, 0xfef05300, 0x200,  )
+	MEMORY32FIXED (ReadWrite, 0xfef05f00, 0x80,   )
+	MEMORY32FIXED (ReadWrite, 0xfef05f80, 0x80,   )
+	MEMORY32FIXED (ReadWrite, 0xfef06b00, 0x200,  )
+	MEMORY32FIXED (ReadWrite, 0xfef06f00, 0x400,  )
+	MEMORY32FIXED (ReadWrite, 0xfef00280, 0x80,   )
+	MEMORY32FIXED (ReadWrite, 0xfef09300, 0x100,  )
+	MEMORY32FIXED (ReadWrite, 0xfef20000, 0x100,  )
+//        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 137 }
       })
       Return (RBUF)
     }
@@ -135,7 +180,7 @@ Device (GPU1)
       Return (RBUF)
     }
   }
-
+  // bcm2711-pixelvalve
   Device(PVA0)
   {
     Name (_HID, "BCMV5040")
@@ -204,6 +249,7 @@ Device (GPU1)
     }
   }
 
+/* disabled ?
   Device(PVA3)
   {
     Name (_HID, "BCMV5043")
@@ -219,12 +265,157 @@ Device (GPU1)
     {
       Name (RBUF, ResourceTemplate ()
       {
-        MEMORY32FIXED (ReadWrite, 0xfe216000, 0x100, )
+        MEMORY32FIXED (ReadWrite, 0xfec12000, 0x100, )
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 138 }
       })
       Return (RBUF)
     }
   }
+
+*/
+
+  Device(PVA4)
+  {
+    Name (_HID, "BCMV5044")
+    Name (_CID, "BCMV5044")
+    Name (_UID, 0x4)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe216000, 0x100, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 142 }
+      })
+      Return (RBUF)
+    }
+  }
+
+/*
+   // brcm,bcm2835-dsi1
+  Device(DSI1)
+  {
+    Name (_HID, "BCMV5059")
+    Name (_CID, "BCMV5059")
+    Name (_UID, 0x2)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 140 }
+      })
+      Return (RBUF)
+    }
+  }
+*/
+
+/*
+  // brcm,bcm2835-dsi0
+  Device(DSI0)
+  {
+    Name (_HID, "BCMV5060")
+    Name (_CID, "BCMV5060")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe209000, 0x78, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 132 }
+      })
+      Return (RBUF)
+    }
+  }
+*/
+
+ // brcm,bcm2711-dsi1
+  Device(DSI1)
+  {
+    Name (_HID, "BCMV5061")
+    Name (_CID, "BCMV5061")
+    Name (_UID, 0x1)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe700000, 0x8c, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 140 }
+      })
+      Return (RBUF)
+    }
+  }
+
+
+
+  Device(VEC0)
+  {
+    Name (_HID, "BCMV5005")
+    Name (_CID, "BCMV5005")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfec13000, 0x1000, )
+        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 155 }
+      })
+      Return (RBUF)
+    }
+  }
+
+  Device(DPI0)
+  {
+    Name (_HID, "BCMV5006")
+    Name (_CID, "BCMV5006")
+    Name (_UID, 0x0)
+    Name (_CCA, 0x0)
+    Method (_STA)
+    {
+      Return (0xf)
+    }
+
+    Method (_CRS, 0x0, Serialized)
+    {
+      Name (RBUF, ResourceTemplate ()
+      {
+        MEMORY32FIXED (ReadWrite, 0xfe208000, 0x8c, )
+      })
+      Return (RBUF)
+    }
+  }
+
+
+// There are also some DCC ports looking like I2C "bcm2711-hdmi-i2c"
+// ignore for now..
 
 }
 
