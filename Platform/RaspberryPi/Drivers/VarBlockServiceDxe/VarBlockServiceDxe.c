@@ -106,9 +106,13 @@ FvbVirtualAddressChangeEvent (
 
 --*/
 {
+  /* thanks Ard... who removed the default set virtualaddress calls in linux*/
+  /* which fixes the X13s, which was likely just exposing a giant race condition */
+  /* in the arm kernel's mapping logic */
   if (mFvInstance->DisableRuntime) {
     mFvInstance->FlashOffset = 0; //disable flash writes
   }
+
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->SpiBase);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->FvBase);
   EfiConvertPointer (0x0, (VOID**)&mFvInstance->VolumeHeader);
@@ -186,8 +190,9 @@ DumpVars (
     if (mFvInstance->FlashOffset) {
       PcdSet32S (PcdPlatformResetDelay, 0);
     }
-    if ((PcdGet32 (PcdSystemTableMode) == SYSTEM_TABLE_MODE_DT) ||
+    if ((PcdGet32 (PcdSystemTableMode)  != SYSTEM_TABLE_MODE_ACPI ) ||
         PcdGet32 (PcdEnableGpio)) {
+	  DEBUG ((DEBUG_INFO, "Runtime variable support turned off!\n"));
       mFvInstance->DisableRuntime = TRUE;
     }
 
@@ -269,6 +274,19 @@ ReadyToBootHandler (
 }
 
 
+
+VOID
+ExitBootServicesHandler (
+  IN EFI_EVENT Event,
+  IN VOID *Context
+  )
+{
+  if (mFvInstance->DisableRuntime) {
+    mFvInstance->FlashOffset = 0; //disable flash writes
+  }
+}
+
+
 VOID
 InstallDumpVarEventHandlers (
   VOID
@@ -277,6 +295,7 @@ InstallDumpVarEventHandlers (
   EFI_STATUS Status;
   EFI_EVENT ResetEvent;
   EFI_EVENT ReadyToBootEvent;
+  EFI_EVENT ExitBootServicesEvent;
 
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
@@ -297,6 +316,19 @@ InstallDumpVarEventHandlers (
                   &ReadyToBootEvent
                 );
   ASSERT_EFI_ERROR (Status);
+
+  // use exit boot services now too because we can't
+  // depend on address space changes following Ards
+  // removal of the call in linux..
+  Status = gBS->CreateEvent (
+                  EVT_SIGNAL_EXIT_BOOT_SERVICES,
+                  TPL_CALLBACK,
+                  ExitBootServicesHandler,
+                  NULL,
+                  &ExitBootServicesEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
+
 }
 
 
