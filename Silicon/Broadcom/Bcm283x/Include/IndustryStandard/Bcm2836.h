@@ -97,6 +97,30 @@
 #define BCM2836_I2C2_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_I2C2_OFFSET)
 #define BCM2836_I2C2_LENGTH                                 0x00000020
 
+#define BCM2836_I2C3_OFFSET                                 0x00205600
+#define BCM2836_I2C3_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_I2C3_OFFSET)
+#define BCM2836_I2C3_LENGTH                                 0x00000020
+
+#define BCM2836_I2C4_OFFSET                                 0x00205800
+#define BCM2836_I2C4_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_I2C4_OFFSET)
+#define BCM2836_I2C4_LENGTH                                 0x00000020
+
+#define BCM2836_I2C5_OFFSET                                 0x00205a00 //27110 doc says 205a80
+#define BCM2836_I2C5_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_I2C5_OFFSET)
+#define BCM2836_I2C5_LENGTH                                 0x00000020
+
+#define BCM2836_I2C6_OFFSET                                 0x00205c00
+#define BCM2836_I2C6_BASE_ADDRESS                           (BCM2836_SOC_REGISTERS + BCM2836_I2C6_OFFSET)
+#define BCM2836_I2C6_LENGTH                                 0x00000020
+
+#define BCM2836_I2C20_OFFSET                                0x00f04500 //2711 DCC0
+#define BCM2836_I2C20_BASE_ADDRESS                          (BCM2836_SOC_REGISTERS + BCM2836_I2C20_OFFSET)
+#define BCM2836_I2C20_LENGTH                                0x00000020
+
+#define BCM2836_I2C21_OFFSET                                0x00f09500 //2711 DCC1
+#define BCM2836_I2C21_BASE_ADDRESS                          (BCM2836_SOC_REGISTERS + BCM2836_I2C21_OFFSET)
+#define BCM2836_I2C21_LENGTH                                0x00000020
+
 /* I2C register offsets */
 #define BCM2835_I2C_C                                      0x00
 #define BCM2835_I2C_S                                      0x04

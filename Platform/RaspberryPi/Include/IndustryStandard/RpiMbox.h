@@ -17,6 +17,9 @@
  * This number was arrived at empirically, following discussion
  * at https://github.com/raspberrypi/firmware/issues/1376, to
  * avoid mailbox time-outs on some commands.
+ *
+ * Some of this is documented here:
+ *   https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
  */
 #define RPI_MBOX_MAX_TRIES                                    0x8000000
 
@@ -61,6 +64,8 @@
 #define RPI_MBOX_POWER_STATE_I2C2                             0x00000006
 #define RPI_MBOX_POWER_STATE_SPI                              0x00000007
 #define RPI_MBOX_POWER_STATE_CCP2TX                           0x00000008
+//#define RPI_MBOX_POWER_STATE_???                           0x00000009
+#define RPI_MBOX_POWER_STATE_V3D                              0x00000010
 
 #define RPI_MBOX_GET_CLOCK_STATE                              0x00030001
 #define RPI_MBOX_GET_CLOCK_RATE                               0x00030002
@@ -84,6 +89,32 @@
 #define RPI_MBOX_GET_EDID_BLOCK                               0x00030020
 #define RPI_MBOX_GET_CUSTOMER_OTP                             0x00030021
 #define RPI_MBOX_GET_DOMAIN_STATE                             0x00030030
+
+/* these are the rpi firmware domain + 100 */
+#define RPI_MBOX_POWER_DOMAIN_I2C0		                        101
+#define RPI_MBOX_POWER_DOMAIN_I2C1		                        102
+#define RPI_MBOX_POWER_DOMAIN_I2C2		                        103
+#define RPI_MBOX_POWER_DOMAIN_VIDEO_SCALER                    104
+#define RPI_MBOX_POWER_DOMAIN_VPU1		                        105
+#define RPI_MBOX_POWER_DOMAIN_HDMI		                        106
+#define RPI_MBOX_POWER_DOMAIN_USB		                          107
+#define RPI_MBOX_POWER_DOMAIN_VEC		                          108
+#define RPI_MBOX_POWER_DOMAIN_JPEG		                        109
+#define RPI_MBOX_POWER_DOMAIN_H264		                        110
+#define RPI_MBOX_POWER_DOMAIN_V3D		                          111
+#define RPI_MBOX_POWER_DOMAIN_ISP		                          112
+#define RPI_MBOX_POWER_DOMAIN_UNICAM0	                        113
+#define RPI_MBOX_POWER_DOMAIN_UNICAM1	                        114
+#define RPI_MBOX_POWER_DOMAIN_CCP2RX		                      115
+#define RPI_MBOX_POWER_DOMAIN_CSI2		                        116
+#define RPI_MBOX_POWER_DOMAIN_CPI		                          117
+#define RPI_MBOX_POWER_DOMAIN_DSI0		                        118
+#define RPI_MBOX_POWER_DOMAIN_DSI1		                        119
+#define RPI_MBOX_POWER_DOMAIN_TRANSPOSER	                    120
+#define RPI_MBOX_POWER_DOMAIN_CCP2TX		                      121
+#define RPI_MBOX_POWER_DOMAIN_CDP		                          122
+#define RPI_MBOX_POWER_DOMAIN_ARM		                          123
+
 #define RPI_MBOX_GET_GPIO_STATE                               0x00030041
 #define RPI_MBOX_GET_GPIO_CONFIG                              0x00030043
 #define RPI_MBOX_GET_PERIPH_REG                               0x00030045
