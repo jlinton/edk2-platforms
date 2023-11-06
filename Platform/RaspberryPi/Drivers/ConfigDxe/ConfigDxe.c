@@ -810,6 +810,21 @@ ApplyVariables (
 //	Status = mFwProtocol->SetPowerState (RPI_MBOX_POWER_STATE_I2C1, TRUE, FALSE); //I2C1 on with wait
   }
 
+
+  // v3d/gpu hacking
+  Status = mFwProtocol->SetPowerState (RPI_MBOX_POWER_STATE_V3D, TRUE, TRUE); 
+
+  for (int y=RPI_MBOX_POWER_DOMAIN_I2C0+1; y<=RPI_MBOX_POWER_DOMAIN_ARM; y++) {
+    DEBUG ((DEBUG_INFO, "Enable powerdomain: %d\n", y));
+	
+    Status = mFwProtocol->SetPowerState (y, TRUE, FALSE);
+  }
+  Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_V3D, TRUE);
+  Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_PIXEL, TRUE);
+  Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_M2MC, TRUE);
+  Status = mFwProtocol->SetClockState (RPI_MBOX_CLOCK_RATE_PIXEL_BVB, TRUE);
+
+  
 }
 
 

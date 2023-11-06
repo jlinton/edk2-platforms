@@ -123,7 +123,10 @@ Device (GPU1)
 	//        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) {	136 }
         Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 128 }
         // sorta bonkers the above should be IRQ 128, which has an interrupt demuxer
-      	// for each of these 8 things. 
+      	// for each of these 8 things.
+        // HDMI DDC20 connection
+        I2CSerialBus (0x50,, 100000,, "\\_SB.GDV0.DDC0",,,,)  // EDID
+        I2CSerialBus (0x30,, 100000,, "\\_SB.GDV0.DDC0",,,,)  // E-DDC Segment Pointer
       })
       Return (RBUF)
     }
@@ -144,16 +147,19 @@ Device (GPU1)
     {
       Name (RBUF, ResourceTemplate ()
       {
-        MEMORY32FIXED (ReadWrite, 0xfef05700, 0x300,  )
-	MEMORY32FIXED (ReadWrite, 0xfef05300, 0x200,  )
-	MEMORY32FIXED (ReadWrite, 0xfef05f00, 0x80,   )
-	MEMORY32FIXED (ReadWrite, 0xfef05f80, 0x80,   )
-	MEMORY32FIXED (ReadWrite, 0xfef06b00, 0x200,  )
-	MEMORY32FIXED (ReadWrite, 0xfef06f00, 0x400,  )
-	MEMORY32FIXED (ReadWrite, 0xfef00280, 0x80,   )
-	MEMORY32FIXED (ReadWrite, 0xfef09300, 0x100,  )
-	MEMORY32FIXED (ReadWrite, 0xfef20000, 0x100,  )
+        MEMORY32FIXED (ReadWrite, 0xfef05700, 0x300,  ) //hdmi
+	MEMORY32FIXED (ReadWrite, 0xfef05300, 0x200,  ) //dvp
+	MEMORY32FIXED (ReadWrite, 0xfef05f00, 0x80,   ) //phy
+	MEMORY32FIXED (ReadWrite, 0xfef05f80, 0x80,   ) //rm
+	MEMORY32FIXED (ReadWrite, 0xfef06b00, 0x200,  ) //packet
+	MEMORY32FIXED (ReadWrite, 0xfef06f00, 0x400,  ) //metadata
+	MEMORY32FIXED (ReadWrite, 0xfef00280, 0x80,   ) //csc
+	MEMORY32FIXED (ReadWrite, 0xfef09300, 0x100,  ) //cec
+	MEMORY32FIXED (ReadWrite, 0xfef20000, 0x100,  ) //hd
 //        Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 137 }
+          // HDMI DDC21 connection
+          I2CSerialBus (0x50,, 100000,, "\\_SB.GDV0.DDC1",,,,)  // EDID
+          I2CSerialBus (0x30,, 100000,, "\\_SB.GDV0.DDC2",,,,)  // E-DDC Segment Pointer
       })
       Return (RBUF)
     }
@@ -592,7 +598,7 @@ Device (I2C2)
 {
   Name (_HID, "BCM2841")
   Name (_CID, "BCM2841")
-  Name (_UID, 0x2)
+  Name (_UID, 0x0)
   Name (_CCA, 0x0)
   Method (_STA)
   {
@@ -607,6 +613,55 @@ Device (I2C2)
   Method (_CRS, 0x0, Serialized)
   {
     MEMORY32SETBASE (RBUF, RMEM, RBAS, BCM2836_I2C2_OFFSET)
+    Return (^RBUF)
+  }
+}
+
+// I2C20 is the HDMI DDC0 connection
+Device (DCC0)
+{
+  Name (_HID, "BCM2841")
+  Name (_CID, "BCM2841")
+  Name (_UID, 0x1)
+  Name (_CCA, 0x0)
+  Method (_STA)
+  {
+    Return (0xf)
+  }
+  Name (RBUF, ResourceTemplate()
+  {
+    MEMORY32FIXED (ReadWrite, 0, BCM2836_I2C20_LENGTH, RMEM)
+    Interrupt (ResourceConsumer, Level, ActiveHigh, Shared) { BCM2836_I2C2_INTERRUPT }
+  })
+
+  Method (_CRS, 0x0, Serialized)
+  {
+    MEMORY32SETBASE (RBUF, RMEM, RBAS, BCM2836_I2C20_OFFSET)
+    Return (^RBUF)
+  }
+}
+
+
+// I2C21 is the HDMI DDC1 connection
+Device (DCC1)
+{
+  Name (_HID, "BCM2841")
+  Name (_CID, "BCM2841")
+  Name (_UID, 0x2)
+  Name (_CCA, 0x0)
+  Method (_STA)
+  {
+    Return (0xf)
+  }
+  Name (RBUF, ResourceTemplate()
+  {
+    MEMORY32FIXED (ReadWrite, 0, BCM2836_I2C21_LENGTH, RMEM)
+    Interrupt (ResourceConsumer, Level, ActiveHigh, Shared) { BCM2836_I2C2_INTERRUPT }
+  })
+
+  Method (_CRS, 0x0, Serialized)
+  {
+    MEMORY32SETBASE (RBUF, RMEM, RBAS, BCM2836_I2C21_OFFSET)
     Return (^RBUF)
   }
 }
