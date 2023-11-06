@@ -193,10 +193,15 @@ RpiFirmwareSetPowerState (
 
   Cmd->BufferHead.BufferSize  = sizeof (*Cmd);
   Cmd->BufferHead.Response    = 0;
-  Cmd->TagHead.TagId          = RPI_MBOX_SET_POWER_STATE;
+  if (DeviceId<RPI_MBOX_POWER_DOMAIN_I2C0) {
+    Cmd->TagBody.DeviceId       = DeviceId;
+    Cmd->TagHead.TagId          = RPI_MBOX_SET_POWER_STATE;
+  } else {
+    Cmd->TagBody.DeviceId       = DeviceId-100;
+    Cmd->TagHead.TagId          = RPI_MBOX_SET_DOMAIN_STATE;
+  }
   Cmd->TagHead.TagSize        = sizeof (Cmd->TagBody);
   Cmd->TagHead.TagValueSize   = 0;
-  Cmd->TagBody.DeviceId       = DeviceId;
   Cmd->TagBody.PowerState     = (PowerState ? RPI_MBOX_POWER_STATE_ENABLE : 0) |
                                 (Wait ? RPI_MBOX_POWER_STATE_WAIT : 0);
   Cmd->EndTag                 = 0;
