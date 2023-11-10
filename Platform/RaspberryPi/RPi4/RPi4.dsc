@@ -312,10 +312,6 @@
   gEfiMdePkgTokenSpaceGuid.PcdPerformanceLibraryPropertyMask|0x1
   gEfiMdePkgTokenSpaceGuid.PcdPostCodePropertyMask|0
   gEfiMdePkgTokenSpaceGuid.PcdUefiLibMaxPrintBufferSize|320
-  #
-  # Follows right after the FD image. (bump the size again)
-  #
-  gRaspberryPiTokenSpaceGuid.PcdFdtBaseAddress|0x002f0000
 
 
   # DEBUG_ASSERT_ENABLED       0x01

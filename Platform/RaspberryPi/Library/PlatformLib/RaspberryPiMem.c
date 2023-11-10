@@ -25,7 +25,7 @@ UINT32 mBoardRevision;
 
 
 // The total number of descriptors, including the final "end-of-table" descriptor.
-#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS 11
+#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS 12
 
 STATIC BOOLEAN                  VirtualMemoryInfoInitialized = FALSE;
 STATIC RPI_MEMORY_REGION_INFO   VirtualMemoryInfo[MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS];
@@ -129,6 +129,15 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryInfo[Index].Type             = RPI_MEM_RUNTIME_REGION;
   VirtualMemoryInfo[Index++].Name           = L"FD Variables";
 
+  // PCC region on PI4
+  if (BCM2711_SOC_REGISTERS != 0) {
+    VirtualMemoryTable[Index].PhysicalBase    = FixedPcdGet32 (PcdPccBaseAddress);
+    VirtualMemoryTable[Index].VirtualBase     = VirtualMemoryTable[Index].PhysicalBase;
+    VirtualMemoryTable[Index].Length          = FixedPcdGet32 (PcdPccSize);;
+    VirtualMemoryTable[Index].Attributes      = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+    VirtualMemoryInfo[Index].Type             = RPI_MEM_RESERVED_REGION;
+    VirtualMemoryInfo[Index++].Name           = L"PCC region";
+  }
   //
   // Both the the Pi 4 and Pi 3 implementations expect the DTB to directly follow the FD.
   //

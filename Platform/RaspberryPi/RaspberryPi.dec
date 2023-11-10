@@ -33,7 +33,7 @@
   # Space reserved for config.txt-specced DTB follows right after the FD image
   # in both RPi3 and RP4 implementations.
   #
-  gRaspberryPiTokenSpaceGuid.PcdFdtBaseAddress|0x001f0000|UINT32|0x00000001
+  gRaspberryPiTokenSpaceGuid.PcdFdtBaseAddress|0x002f0000|UINT32|0x00000001
   gRaspberryPiTokenSpaceGuid.PcdFirmwareBlockSize|0x0|UINT32|0x00000002
   gRaspberryPiTokenSpaceGuid.PcdNvStorageEventLogBase|0x0|UINT32|0x00000003
   gRaspberryPiTokenSpaceGuid.PcdNvStorageEventLogSize|0x0|UINT32|0x00000004
@@ -51,6 +51,8 @@
   gRaspberryPiTokenSpaceGuid.PcdGicPmuIrq1|0x0|UINT32|0x00000034
   gRaspberryPiTokenSpaceGuid.PcdGicPmuIrq2|0x0|UINT32|0x00000035
   gRaspberryPiTokenSpaceGuid.PcdGicPmuIrq3|0x0|UINT32|0x00000036
+  gRaspberryPiTokenSpaceGuid.PcdPccBaseAddress|0x002e0000|UINT32|0x00000037
+  gRaspberryPiTokenSpaceGuid.PcdPccSize|0x10000|UINT32|0x00000038
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
   gRaspberryPiTokenSpaceGuid.PcdCpuClock|0|UINT32|0x0000000d

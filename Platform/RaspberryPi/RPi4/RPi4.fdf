@@ -135,9 +135,9 @@ DATA = {
 0x002d0000|0x00010000
 gRaspberryPiTokenSpaceGuid.PcdNvStorageFtwSpareBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
 
-# reserve some ram for the ACPI PCC channel structures now, immediately before the DTB
+# Like the DTB, reserve some ram for the ACPI PCC channel structures now, immediately before the DTB
 # 0x002e0000|0x10000
-# gRaspberryPiTokenSpaceGuid.PcdFdtBaseAddress|gRaspberryPiTokenSpaceGuid.PcdPccSize
+# gRaspberryPiTokenSpaceGuid.PcdPccBaseAddress|gRaspberryPiTokenSpaceGuid.PcdPccSize
 
 #
 # This is just for documentation purposes! The DTB reserved space is not part of the FD,

@@ -24,7 +24,7 @@ typedef struct {
 
 #pragma pack ()
 
-#define PCC_MEM_ADDR 0x1f0000 //same as DT base.. cause if we are using PCC, we probably aren't using DT
+#define PCC_MEM_ADDR (FixedPcdGet32 (PcdPccBaseAddress)) //immediately before DT
 #define DOORBELL_ADDR 0xFF800080
 
 PI_PLATFORM_COMM_CHANNEL_TABLE Pcct = {
