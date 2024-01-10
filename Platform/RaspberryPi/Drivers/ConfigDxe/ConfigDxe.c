@@ -1,3 +1,5 @@
+
+
 /** @file
  *
  *  Copyright (c) 2019 - 2020, ARM Limited. All rights reserved.
@@ -30,6 +32,7 @@
 #include <Library/PcdLib.h>
 #include <Protocol/AcpiTable.h>
 #include <Protocol/BcmGenetPlatformDevice.h>
+#include <Protocol/MemoryAttribute.h>
 #include <Protocol/RpiFirmware.h>
 #include <ConfigVars.h>
 #include "ConfigDxeFormSetGuid.h"
@@ -124,6 +127,50 @@ STATIC GENET_DEVICE mGenetDevice = {
   }
 };
 
+/**
+  Uninstall the EFI memory attribute protocol if it exists.
+**/
+STATIC
+VOID
+UninstallEfiMemoryAttributesProtocol (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  EFI_HANDLE  Handle;
+  UINTN       Size;
+  VOID        *MemoryAttributeProtocol;
+
+  Size   = sizeof (Handle);
+  Status = gBS->LocateHandle (
+                  ByProtocol,
+                  &gEfiMemoryAttributeProtocolGuid,
+                  NULL,
+                  &Size,
+                  &Handle
+                  );
+
+  if (EFI_ERROR (Status)) {
+    ASSERT (Status == EFI_NOT_FOUND);
+    return;
+  }
+
+  Status = gBS->HandleProtocol (
+                  Handle,
+                  &gEfiMemoryAttributeProtocolGuid,
+                  &MemoryAttributeProtocol
+                  );
+  ASSERT_EFI_ERROR (Status);
+
+  Status = gBS->UninstallProtocolInterface (
+                  Handle,
+                  &gEfiMemoryAttributeProtocolGuid,
+                  MemoryAttributeProtocol
+                  );
+  ASSERT_EFI_ERROR (Status);
+}
+
+
 
 STATIC
 VOID
@@ -153,6 +200,8 @@ RegisterDevices (
                     NULL);
     ASSERT_EFI_ERROR (Status);
   }
+  /* work around broken shims for now */
+  UninstallEfiMemoryAttributesProtocol();
 }
 
 STATIC EFI_STATUS

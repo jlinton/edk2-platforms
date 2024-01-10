@@ -66,6 +66,7 @@
   gEfiPciIoProtocolGuid                           ## CONSUMES
   gRaspberryPiFirmwareProtocolGuid                ## CONSUMES
   gRaspberryPiConfigAppliedProtocolGuid           ## PRODUCES
+  gEfiMemoryAttributeProtocolGuid                 ## CONSUMES
 
 [FixedPcd]
   gRaspberryPiTokenSpaceGuid.PcdCpuLowSpeedMHz
